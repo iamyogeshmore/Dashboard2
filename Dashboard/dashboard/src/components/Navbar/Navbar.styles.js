@@ -3,7 +3,7 @@ import { Typography, Button } from "@mui/material";
 
 export const EnergyLabel = styled(Typography)(({ theme }) => ({
   fontWeight: 400,
-  fontSize: "1.7rem",
+  fontSize: "1.5rem",
   display: "flex",
   alignItems: "center",
   color: theme.palette.mode === "light" ? "#ffffff" : "#ffffff",
@@ -42,7 +42,7 @@ export const EnergyLabel = styled(Typography)(({ theme }) => ({
 
 export const NavButton = styled(Button)(({ theme }) => ({
   color: "#fff",
-  margin: "0 8px",
+
   fontWeight: 200,
   fontSize: "1rem",
   padding: "8px 16px",
@@ -65,17 +65,9 @@ export const NavButton = styled(Button)(({ theme }) => ({
 }));
 
 export const TimeDisplay = styled(Typography)(({ theme }) => ({
-  marginLeft: "16px",
   color: "#fff",
   fontSize: "1rem",
   fontWeight: 400,
-  padding: "6px 12px",
-  borderRadius: "12px",
-  background: "rgba(255, 255, 255, 0.15)",
+  textAlign: "center",
   animation: "pulse 2s infinite",
-  "@keyframes pulse": {
-    "0%": { boxShadow: `0 0 5px ${theme.palette.primary.neon}30` },
-    "50%": { boxShadow: `0 0 15px ${theme.palette.primary.neon}70` },
-    "100%": { boxShadow: `0 0 5px ${theme.palette.primary.neon}30` },
-  },
 }));

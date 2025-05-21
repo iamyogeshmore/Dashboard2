@@ -4,16 +4,33 @@ import { ArrowDropDown } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 import { NavButton } from "./Navbar.styles";
 
-const DropdownMenu = ({ label, items, isActive, icon }) => {
+const DropdownMenu = ({
+  label,
+  items,
+  isActive,
+  icon,
+  onClick,
+  open,
+  onClose,
+}) => {
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleOpen = (event) => {
     setAnchorEl(event.currentTarget);
+    if (onClick) {
+      onClick(); // Call custom onClick handler
+    }
   };
 
   const handleClose = () => {
     setAnchorEl(null);
+    if (onClose) {
+      onClose(); // Call custom onClose handler
+    }
   };
+
+  // Use open prop if provided, otherwise use local anchorEl state
+  const isOpen = open !== undefined ? open : Boolean(anchorEl);
 
   return (
     <>
@@ -29,7 +46,7 @@ const DropdownMenu = ({ label, items, isActive, icon }) => {
       </Tooltip>
       <Menu
         anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
+        open={isOpen}
         onClose={handleClose}
         PaperProps={{
           sx: {
@@ -66,11 +83,14 @@ const DropdownMenu = ({ label, items, isActive, icon }) => {
                 transform: "scale(1.02)",
                 transition: "all 0.2s ease",
               },
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              {item.icon}
               {item.label}
+              {item.icon}
             </Box>
           </MenuItem>
         ))}

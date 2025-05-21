@@ -17,69 +17,103 @@ import GenerateReports from "./components/Reports/GenerateReports";
 import HistoricalDataDisplayTV from "./components/Views/TerminalView/HistoricalDataDisplayTV";
 import HistoricalDataDisplayMV from "./components/Views/MeasurandView/HistoricalDataDisplayMV";
 import { useThemeContext } from "./context/ThemeContext";
+import { useRef, useState } from "react";
+import { useLocation } from "react-router-dom"; // Import useLocation
 import "./index.css";
 
-function AppContent() {
+function AppContent({
+  onLoadDashboard,
+  onCreateNewDashboard,
+  currentDashboardId,
+  setCurrentDashboardId,
+}) {
   const { mode } = useThemeContext();
   const theme = getTheme(mode);
+  const location = useLocation(); // Now safe to use within Router context
+
+  // Update currentDashboardId when loading a dashboard
+  const handleLoadDashboard = (dashboardId) => {
+    setCurrentDashboardId(dashboardId);
+    onLoadDashboard.current(dashboardId);
+  };
 
   return (
     <MuiThemeProvider theme={theme}>
-      <Router>
-        <div
-          style={{
-            background: theme.palette.background.paper,
-
-            minHeight: "100vh",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <Navbar />
-          <div style={{ flex: 1 }}>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/views/terminal" element={<TerminalView />} />
-              <Route
-                path="/views/terminal/historical/:tableId"
-                element={<HistoricalDataDisplayTV />}
-              />
-              <Route
-                path="/views/measurand/historical/:tableId"
-                element={<HistoricalDataDisplayMV />}
-              />
-              <Route path="/views/measurand" element={<MeasurandView />} />
-              <Route path="/views/script" element={<ScriptView />} />
-              <Route path="/views/log" element={<LogView />} />
-              <Route
-                path="/screens/injection-schedule"
-                element={<InjectionSchedule />}
-              />
-              <Route
-                path="/screens/schedule-entry"
-                element={<ScheduleEntry />}
-              />
-              <Route
-                path="/screens/real-time-power-balance"
-                element={<RealTimePowerBalance />}
-              />
-              <Route path="/reports/view" element={<ViewReports />} />
-              <Route path="/reports/generate" element={<GenerateReports />} />
-              <Route path="/about" element={<div>About Page</div>} />
-              <Route path="/contact" element={<div>Contact Page</div>} />
-            </Routes>
-          </div>
-          <Footer />
+      <div
+        style={{
+          background: theme.palette.background.paper,
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <Navbar
+          onLoadDashboard={onLoadDashboard}
+          onCreateNewDashboard={onCreateNewDashboard}
+          currentDashboardId={currentDashboardId}
+        />
+        <div style={{ flex: 1 }}>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <Dashboard
+                  onLoadDashboard={onLoadDashboard}
+                  onCreateNewDashboard={onCreateNewDashboard}
+                  currentPath={location.pathname}
+                />
+              }
+            />
+            <Route path="/views/terminal" element={<TerminalView />} />
+            <Route
+              path="/views/terminal/historical/:tableId"
+              element={<HistoricalDataDisplayTV />}
+            />
+            <Route
+              path="/views/measurand/historical/:tableId"
+              element={<HistoricalDataDisplayMV />}
+            />
+            <Route path="/views/measurand" element={<MeasurandView />} />
+            <Route path="/views/script" element={<ScriptView />} />
+            <Route path="/views/log" element={<LogView />} />
+            <Route
+              path="/screens/injection-schedule"
+              element={<InjectionSchedule />}
+            />
+            <Route path="/screens/schedule-entry" element={<ScheduleEntry />} />
+            <Route
+              path="/screens/real-time-power-balance"
+              element={<RealTimePowerBalance />}
+            />
+            <Route path="/reports/view" element={<ViewReports />} />
+            <Route path="/reports/generate" element={<GenerateReports />} />
+            <Route path="/about" element={<div>About Page</div>} />
+            <Route path="/contact" element={<div>Contact Page</div>} />
+          </Routes>
         </div>
-      </Router>
+        <Footer />
+      </div>
     </MuiThemeProvider>
   );
 }
 
 function App() {
+  const onLoadDashboard = useRef(() => {});
+  const onCreateNewDashboard = useRef(() => {});
+  const [currentDashboardId, setCurrentDashboardId] = useState(null);
+
   return (
     <ThemeProvider>
-      <AppContent />
+      <Router>
+        {" "}
+        {/* Move Router here to wrap AppContent */}
+        <AppContent
+          onLoadDashboard={onLoadDashboard}
+          onCreateNewDashboard={onCreateNewDashboard}
+          currentDashboardId={currentDashboardId}
+          setCurrentDashboardId={setCurrentDashboardId}
+        />
+      </Router>
     </ThemeProvider>
   );
 }

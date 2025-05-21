@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
-import { AppBar, Toolbar, Box, Tooltip } from "@mui/material";
-import { Link, useLocation } from "react-router-dom";
+import { AppBar, Toolbar, Box, Tooltip, Chip } from "@mui/material";
+import { Link, useLocation, useNavigate } from "react-router-dom"; // Added useNavigate
 import { motion } from "framer-motion";
 import DropdownMenu from "./DropdownMenu";
 import ThemeToggle from "../../ThemeToggle/ThemeToggle";
 import { EnergyLabel, NavButton, TimeDisplay } from "./Navbar.styles";
 
-const Navbar = () => {
+const Navbar = ({
+  onLoadDashboard,
+  onCreateNewDashboard,
+  currentDashboardId,
+}) => {
   const [currentTime, setCurrentTime] = useState(
     new Date().toLocaleString("en-US", {
       month: "short",
@@ -18,8 +22,12 @@ const Navbar = () => {
     })
   );
   const [showRouteName, setShowRouteName] = useState(false);
+  const [savedDashboards, setSavedDashboards] = useState([]);
   const location = useLocation();
+  const navigate = useNavigate(); // For programmatic navigation
+  const [openDropdown, setOpenDropdown] = useState(false); // Track dropdown state
 
+  // Update time every second
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(
@@ -36,18 +44,34 @@ const Navbar = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Toggle route name display
   useEffect(() => {
-    // Reset to show route name when route changes
     setShowRouteName(true);
     const interval = setInterval(() => {
       setShowRouteName((prev) => !prev);
-    }, 5000); // Toggle every 5 seconds
+    }, 5000);
     return () => clearInterval(interval);
   }, [location.pathname]);
 
+  // Load saved dashboards from localStorage
+  useEffect(() => {
+    const dashboards = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith("dashboard_")) {
+        const dashboardData = JSON.parse(localStorage.getItem(key));
+        dashboards.push({
+          id: key,
+          name: dashboardData.name,
+          isPublished: dashboardData.isPublished || false,
+        });
+      }
+    }
+    setSavedDashboards(dashboards);
+  }, [currentDashboardId]);
+
   // Map routes to display names
   const getRouteName = (path) => {
-    // Direct matches
     const directRoutes = {
       "/": "Dashboard",
       "/views/terminal": "Terminal View",
@@ -63,12 +87,10 @@ const Navbar = () => {
       "/contact": "Contact",
     };
 
-    // Check for direct match first
     if (directRoutes[path]) {
       return directRoutes[path];
     }
 
-    // Check for dynamic routes with pattern matching
     if (path.match(/^\/views\/terminal\/historical\/[a-zA-Z0-9-]+$/)) {
       return "Terminal historical View";
     }
@@ -81,7 +103,6 @@ const Navbar = () => {
 
   const currentRouteName = getRouteName(location.pathname);
 
-  // Animation variants
   const textVariants = {
     hidden: { opacity: 0, scale: 0.95 },
     visible: {
@@ -101,6 +122,49 @@ const Navbar = () => {
       },
     },
   };
+
+  // Handle Dashboard tab click
+  const handleDashboardClick = () => {
+    if (location.pathname !== "/") {
+      // If not on "/", navigate to "/" to load published dashboard
+      navigate("/");
+    } else {
+      // If on "/", toggle dropdown
+      setOpenDropdown(true);
+    }
+  };
+
+  // Dashboard dropdown items
+  const dashboardItems = [
+    {
+      label: "Create New Dashboard",
+      onClick: () => onCreateNewDashboard.current(),
+    },
+    ...savedDashboards.map((dashboard) => ({
+      label: dashboard.name,
+      onClick: () => onLoadDashboard.current(dashboard.id),
+      icon: (
+        <Chip
+          label={
+            dashboard.isPublished
+              ? "Published"
+              : dashboard.id === currentDashboardId
+              ? "Active"
+              : ""
+          }
+          color={
+            dashboard.isPublished
+              ? "success"
+              : dashboard.id === currentDashboardId
+              ? "primary"
+              : "default"
+          }
+          size="small"
+          sx={{ ml: 1, height: 20 }}
+        />
+      ),
+    })),
+  ];
 
   return (
     <AppBar position="static">
@@ -127,25 +191,24 @@ const Navbar = () => {
           </motion.div>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Tooltip title="Main Dashboard">
-            <NavButton
-              component={Link}
-              to="/"
-              startIcon={
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
-                </svg>
-              }
-              className={location.pathname === "/" ? "active" : ""}
-            >
-              Dashboard
-            </NavButton>
-          </Tooltip>
+          <DropdownMenu
+            label="Dashboards"
+            items={dashboardItems}
+            icon={
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+              </svg>
+            }
+            isActive={location.pathname === "/"}
+            onClick={handleDashboardClick} // Custom click handler
+            open={openDropdown}
+            onClose={() => setOpenDropdown(false)}
+          />
           <DropdownMenu
             label="Views"
             items={[
@@ -186,7 +249,7 @@ const Navbar = () => {
                 viewBox="0 0 24 24"
                 fill="currentColor"
               >
-                <path d="M20 3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h3l-1 1v2h12v-2l-venir1-1h3c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 13H4V5h16v11z" />
+                <path d="M20 3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h3l-1 1v2h12v-2l-1-1h3c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 13H4V5h16v11z" />
               </svg>
             }
             isActive={location.pathname.startsWith("/screens")}
