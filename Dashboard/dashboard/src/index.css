@@ -1,0 +1,66 @@
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+  padding: 80px 16px 16px;
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 960px) {
+  main {
+    padding: 72px 12px 12px;
+  }
+
+  .MuiToolbar-root {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .MuiTypography-root {
+    font-size: 1.1rem !important;
+  }
+
+  .MuiButton-root {
+    padding: 6px 12px !important;
+    font-size: 0.9rem !important;
+  }
+}
+
+@media (max-width: 600px) {
+  main {
+    padding: 64px 8px 8px;
+  }
+
+  .MuiToolbar-root {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .MuiButton-root {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .MuiGrid-item {
+    width: 100%;
+  }
+}
