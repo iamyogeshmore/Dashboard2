@@ -118,6 +118,7 @@ export const getTheme = (mode) =>
               "transform 0.2s, background-color 0.3s, box-shadow 0.3s",
             borderRadius: "8px",
             padding: "8px 16px",
+            backdropFilter: "blur(6px)", // Added for glassmorphism
             "&:hover": {
               transform: "translateY(-2px)",
               boxShadow: `0 4px 12px ${

@@ -1,27 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Box,
-  Grid,
-  AppBar,
   Toolbar,
-  IconButton,
   Tooltip,
-  Typography,
   Fade,
   Button,
-  Switch,
-  styled,
-  Dialog,
+  Paper,
+  Chip,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
-  MenuItem,
-  Select,
   FormControl,
   InputLabel,
-  Chip,
-  Paper,
+  Menu,
+  MenuItem,
+  Typography,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
 import {
   TextFields,
@@ -34,67 +29,60 @@ import {
   Publish,
   Update,
   Delete,
+  Title,
+  Lock,
+  LockOpen,
+  Settings,
+  Edit,
+  Brush,
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import WidgetDialog from "./WidgetDialog";
+import WidgetPropertiesDialog from "./WidgetPropertiesDialog";
 import TextWidget from "./dashboardWidgets/TextWidget.js";
 import NumberWidget from "./dashboardWidgets/NumberWidget.js";
 import GaugeWidget from "./dashboardWidgets/GaugeWidget.js";
 import GraphWidget from "./dashboardWidgets/GraphWidget.js";
+import MultiAxisGraphWidget from "./dashboardWidgets/MultiAxisGraphWidget.js";
 import DataGridWidget from "./dashboardWidgets/DataGridWidget.js";
 import ImageWidget from "./dashboardWidgets/ImageWidget.js";
 import { useThemeContext } from "../../context/ThemeContext";
 import useSnackbar from "./useSnackbar";
+import { useTheme } from "@mui/material/styles";
+import {
+  StyledAppBar,
+  DashboardTitle,
+  WidgetIconButton,
+  ActionButton,
+  EditModeSwitch,
+  StyledWidgetDialog,
+  StyledTextField,
+  StyledSelect,
+} from "./Dashboard.styles";
+import ReactGridLayout from "react-grid-layout";
+import "react-grid-layout/css/styles.css";
+import "react-resizable/css/styles.css";
 
-// Styled Switch for Edit Mode Toggle
-const EditModeSwitch = styled(Switch)(({ theme }) => ({
-  width: 48,
-  height: 24,
-  padding: 0,
-  "& .MuiSwitch-switchBase": {
-    padding: 3,
-    margin: 2,
-    transitionDuration: "300ms",
-    "&.Mui-checked": {
-      transform: "translateX(24px)",
-      color: theme.palette.primary.contrastText,
-      "& + .MuiSwitch-track": {
-        background: `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.primary.light})`,
-        opacity: 1,
-        border: 0,
-      },
-      "& .MuiSwitch-thumb": {
-        background: `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
-      },
-    },
-    "&:not(.Mui-checked)": {
-      "& .MuiSwitch-thumb": {
-        background: `linear-gradient(45deg, ${theme.palette.secondary.dark}, ${theme.palette.secondary.light})`,
-      },
-    },
-  },
-  "& .MuiSwitch-thumb": {
-    width: 16,
-    height: 16,
-    boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-    transition: "background 0.3s ease",
-  },
-  "& .MuiSwitch-track": {
-    borderRadius: 24 / 2,
-    background: `linear-gradient(45deg, ${theme.palette.secondary.dark}, ${theme.palette.secondary.main})`,
-    opacity: 1,
-    transition: "background 0.3s ease",
-    boxShadow: "inset 0 1px 3px rgba(0,0,0,0.1)",
-  },
-}));
+const VALID_WIDGET_TYPES = [
+  "text",
+  "number",
+  "gauge",
+  "graph",
+  "datagrid",
+  "image",
+];
 
 const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
   const { mode } = useThemeContext();
   const { showSnackbar, SnackbarComponent } = useSnackbar();
   const [openDialog, setOpenDialog] = useState(false);
+  const [openPropertiesDialog, setOpenPropertiesDialog] = useState(false);
   const [selectedWidgetType, setSelectedWidgetType] = useState(null);
+  const [selectedWidget, setSelectedWidget] = useState(null);
   const [widgets, setWidgets] = useState([]);
+  const [layout, setLayout] = useState([]);
   const [editMode, setEditMode] = useState(true);
+  const [isLocked, setIsLocked] = useState(false);
   const [openSaveDialog, setOpenSaveDialog] = useState(false);
   const [dashboardName, setDashboardName] = useState("");
   const [patron, setPatron] = useState("");
@@ -103,11 +91,39 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
   const [currentDashboardId, setCurrentDashboardId] = useState(null);
   const [isPublished, setIsPublished] = useState(false);
   const [noPublishedDashboard, setNoPublishedDashboard] = useState(false);
+  const [editingWidget, setEditingWidget] = useState(null);
+  const [hoveredWidgetId, setHoveredWidgetId] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
 
-  // Load published dashboard or blank view on mount or navigation to "/"
+  const theme = useTheme();
+  const [gridWidth, setGridWidth] = useState(0);
+  const gridRef = useRef(null);
+
+  useEffect(() => {
+    const updateGridWidth = () => {
+      if (gridRef.current) {
+        const containerWidth = gridRef.current.getBoundingClientRect().width;
+        setGridWidth(containerWidth);
+      }
+    };
+
+    updateGridWidth();
+    window.addEventListener("resize", updateGridWidth);
+    const resizeObserver = new ResizeObserver(updateGridWidth);
+    if (gridRef.current) {
+      resizeObserver.observe(gridRef.current);
+    }
+
+    return () => {
+      window.removeEventListener("resize", updateGridWidth);
+      if (gridRef.current) {
+        resizeObserver.unobserve(gridRef.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     if (currentPath === "/") {
-      // Check for a published dashboard
       let publishedDashboard = null;
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -122,14 +138,15 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
 
       if (publishedDashboard) {
         setWidgets(publishedDashboard.widgets || []);
+        setLayout(publishedDashboard.layout || []);
         setDashboardName(publishedDashboard.name || "");
         setIsDashboardSaved(true);
         setCurrentDashboardId(publishedDashboard.id);
         setIsPublished(true);
         setNoPublishedDashboard(false);
       } else {
-        // No published dashboard, show blank view
         setWidgets([]);
+        setLayout([]);
         setDashboardName("");
         setIsDashboardSaved(false);
         setCurrentDashboardId(null);
@@ -140,31 +157,97 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
   }, [currentPath]);
 
   const handleOpenDialog = (type) => {
+    if (!VALID_WIDGET_TYPES.includes(type)) {
+      showSnackbar("Invalid widget type selected", "error");
+      return;
+    }
     setSelectedWidgetType(type);
+    setEditingWidget(null);
     setOpenDialog(true);
+  };
+
+  const handleEditWidget = (widget) => {
+    if (!VALID_WIDGET_TYPES.includes(widget.type)) {
+      showSnackbar("Cannot edit widget: Invalid widget type", "error");
+      return;
+    }
+    setSelectedWidgetType(widget.type);
+    setEditingWidget(widget);
+    setOpenDialog(true);
+  };
+
+  const handleOpenPropertiesDialog = (widget) => {
+    setSelectedWidget(widget);
+    setOpenPropertiesDialog(true);
+  };
+
+  const handleClosePropertiesDialog = () => {
+    setOpenPropertiesDialog(false);
+    setSelectedWidget(null);
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setSelectedWidgetType(null);
+    setEditingWidget(null);
   };
 
   const handleAddWidget = (widgetData) => {
-    setWidgets((prev) => [
-      ...prev,
-      { id: Date.now(), type: selectedWidgetType, data: widgetData },
-    ]);
+    if (editingWidget) {
+      setWidgets((prev) =>
+        prev.map((w) =>
+          w.id === editingWidget.id ? { ...w, data: widgetData } : w
+        )
+      );
+      showSnackbar("Widget updated successfully!", "success");
+    } else {
+      const newWidgetId = Date.now().toString();
+      setWidgets((prev) => [
+        ...prev,
+        { id: newWidgetId, type: selectedWidgetType, data: widgetData },
+      ]);
+      setLayout((prev) => [
+        ...prev,
+        { i: newWidgetId, x: 0, y: 0, w: 4, h: 4, minW: 2, minH: 2, maxH: 12 },
+      ]);
+      showSnackbar("Widget added successfully!", "success");
+    }
     handleCloseDialog();
-    showSnackbar("Widget added successfully!", "success");
+  };
+
+  const handleUpdateWidgetProperties = (updatedWidget) => {
+    setWidgets((prev) =>
+      prev.map((w) => (w.id === updatedWidget.id ? updatedWidget : w))
+    );
+    showSnackbar("Widget properties updated successfully!", "success");
+    handleClosePropertiesDialog();
   };
 
   const handleDeleteWidget = (widgetId) => {
     setWidgets((prev) => prev.filter((widget) => widget.id !== widgetId));
+    setLayout((prev) => prev.filter((item) => item.i !== widgetId));
     showSnackbar("Widget deleted successfully!", "success");
+  };
+
+  const handleLayoutChange = (newLayout) => {
+    if (!isLocked) {
+      setLayout(newLayout);
+    }
   };
 
   const handleToggleEditMode = () => {
     setEditMode((prev) => !prev);
+    if (!editMode) {
+      setIsLocked(false);
+    }
+  };
+
+  const handleToggleLock = () => {
+    setIsLocked((prev) => !prev);
+    showSnackbar(
+      isLocked ? "Widgets unlocked for repositioning" : "Widgets locked",
+      "info"
+    );
   };
 
   const handleOpenSaveDialog = () => {
@@ -197,11 +280,10 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
       showSnackbar(error, "error");
       return;
     }
-    // Generate unique ID for new dashboards
     const dashboardId = isDashboardSaved
       ? currentDashboardId
       : `dashboard_${Date.now()}`;
-    const dashboardData = { widgets, name: dashboardName, isPublished };
+    const dashboardData = { widgets, layout, name: dashboardName, isPublished };
     localStorage.setItem(dashboardId, JSON.stringify(dashboardData));
     console.log(
       isDashboardSaved ? "Updating dashboard:" : "Saving dashboard:",
@@ -216,18 +298,20 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
     setIsDashboardSaved(true);
     setCurrentDashboardId(dashboardId);
     handleCloseSaveDialog();
-    // Update parent component to refresh dashboard list
     onLoadDashboard.current(dashboardId);
   };
 
   const handlePublishDashboard = () => {
-    // Set isPublished: true for current dashboard, false for others
     const dashboardId = isDashboardSaved
       ? currentDashboardId
       : `dashboard_${Date.now()}`;
-    const dashboardData = { widgets, name: dashboardName, isPublished: true };
+    const dashboardData = {
+      widgets,
+      layout,
+      name: dashboardName,
+      isPublished: true,
+    };
 
-    // Update all dashboards in localStorage
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key.startsWith("dashboard_") && key !== dashboardId) {
@@ -237,13 +321,12 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
       }
     }
 
-    // Save current dashboard
     localStorage.setItem(dashboardId, JSON.stringify(dashboardData));
+    console.log("Publishing dashboard:", dashboardData);
     setIsPublished(true);
     setIsDashboardSaved(true);
     setCurrentDashboardId(dashboardId);
     showSnackbar("Dashboard published successfully!", "success");
-    // Update parent component
     onLoadDashboard.current(dashboardId);
   };
 
@@ -251,6 +334,7 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
     const dashboardData = JSON.parse(localStorage.getItem(dashboardId));
     if (dashboardData) {
       setWidgets(dashboardData.widgets || []);
+      setLayout(dashboardData.layout || []);
       setDashboardName(dashboardData.name || "");
       setIsDashboardSaved(true);
       setCurrentDashboardId(dashboardId);
@@ -262,6 +346,7 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
 
   const handleCreateNewDashboard = () => {
     setWidgets([]);
+    setLayout([]);
     setDashboardName("");
     setIsDashboardSaved(false);
     setCurrentDashboardId(null);
@@ -270,7 +355,6 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
     showSnackbar("New dashboard created!", "info");
   };
 
-  // Pass load and create functions to parent
   useEffect(() => {
     if (onLoadDashboard) {
       onLoadDashboard.current = handleLoadDashboard;
@@ -293,23 +377,47 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
 
   const renderWidget = (widget) => {
     return (
-      <Box sx={{ position: "relative", height: "100%" }}>
-        {editMode && (
-          <Tooltip title="Delete Widget">
-            <IconButton
-              size="small"
-              onClick={() => handleDeleteWidget(widget.id)}
-              sx={{
-                position: "absolute",
-                top: 8,
-                right: 8,
-                bgcolor: "rgba(255,255,255,0.8)",
-                zIndex: 1,
-              }}
-            >
-              <Delete fontSize="small" color="error" />
-            </IconButton>
-          </Tooltip>
+      <Box
+        sx={{ position: "relative", height: "100%", width: "100%" }}
+        onMouseEnter={() => setHoveredWidgetId(widget.id)}
+        onMouseLeave={() => setHoveredWidgetId(null)}
+      >
+        {editMode && hoveredWidgetId === widget.id && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              display: "flex",
+              gap: 1,
+              zIndex: 1,
+            }}
+          >
+            <Tooltip title="Edit Widget">
+              <WidgetIconButton
+                size="small"
+                onClick={() => handleEditWidget(widget)}
+              >
+                <Edit fontSize="small" color="primary" />
+              </WidgetIconButton>
+            </Tooltip>
+            <Tooltip title="Widget Properties">
+              <WidgetIconButton
+                size="small"
+                onClick={() => handleOpenPropertiesDialog(widget)}
+              >
+                <Brush fontSize="small" color="primary" />
+              </WidgetIconButton>
+            </Tooltip>
+            <Tooltip title="Delete Widget">
+              <WidgetIconButton
+                size="small"
+                onClick={() => handleDeleteWidget(widget.id)}
+              >
+                <Delete fontSize="small" color="error" />
+              </WidgetIconButton>
+            </Tooltip>
+          </Box>
         )}
         {(() => {
           switch (widget.type) {
@@ -320,9 +428,49 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
             case "gauge":
               return <GaugeWidget data={widget.data} />;
             case "graph":
-              return <GraphWidget data={widget.data} />;
+              return widget.data.graphProfile === "multi-axis" ? (
+                <MultiAxisGraphWidget
+                  data={widget.data}
+                  onUpdate={(updatedData) => {
+                    setWidgets((prev) =>
+                      prev.map((w) =>
+                        w.id === widget.id ? { ...w, data: updatedData } : w
+                      )
+                    );
+                    showSnackbar(
+                      "Multi-Axis Graph settings updated!",
+                      "success"
+                    );
+                  }}
+                />
+              ) : (
+                <GraphWidget
+                  data={widget.data}
+                  onUpdate={(updatedData) => {
+                    setWidgets((prev) =>
+                      prev.map((w) =>
+                        w.id === widget.id ? { ...w, data: updatedData } : w
+                      )
+                    );
+                    showSnackbar("Graph settings updated!", "success");
+                  }}
+                />
+              );
             case "datagrid":
-              return <DataGridWidget data={widget.data} />;
+              return (
+                <DataGridWidget
+                  data={widget.data}
+                  editMode={editMode}
+                  onUpdate={(updatedData) => {
+                    setWidgets((prev) =>
+                      prev.map((w) =>
+                        w.id === widget.id ? { ...w, data: updatedData } : w
+                      )
+                    );
+                    showSnackbar("DataGrid settings updated!", "success");
+                  }}
+                />
+              );
             case "image":
               return <ImageWidget data={widget.data} />;
             default:
@@ -339,7 +487,6 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
         background: (theme) =>
           `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.background.paper} 100%)`,
         minHeight: "100vh",
-        borderRadius: 2,
         boxShadow: (theme) =>
           `0 4px 20px ${
             theme.palette.mode === "light"
@@ -357,6 +504,12 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
                 p: 4,
                 textAlign: "center",
                 bgcolor: (theme) => theme.palette.background.paper,
+                boxShadow: (theme) =>
+                  `0 4px 12px ${
+                    theme.palette.mode === "light"
+                      ? "rgba(0,0,0,0.08)"
+                      : "rgba(0,0,0,0.2)"
+                  }`,
               }}
             >
               <Typography variant="h6" gutterBottom>
@@ -365,14 +518,13 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
               <Typography variant="body1" color="text.secondary" gutterBottom>
                 Create a new dashboard or select one from the dropdown.
               </Typography>
-              <Button
+              <ActionButton
                 variant="contained"
-                color="primary"
                 onClick={handleCreateNewDashboard}
                 sx={{ mt: 2 }}
               >
                 Create New Dashboard
-              </Button>
+              </ActionButton>
             </Paper>
           ) : (
             <>
@@ -382,76 +534,69 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.5, ease: "easeOut" }}
                 >
-                  <AppBar
-                    position="static"
-                    sx={{
-                      background: (theme) =>
-                        theme.components.MuiAppBar.styleOverrides.root
-                          .backgroundImage,
-                      borderRadius: 0,
-                      boxShadow: (theme) =>
-                        theme.components.MuiAppBar.styleOverrides.root
-                          .boxShadow,
-                      py: 0,
-                      minHeight: 48,
-                    }}
-                  >
+                  <StyledAppBar position="static">
                     <Toolbar
                       variant="dense"
                       sx={{
                         justifyContent: "space-between",
                         alignItems: "center",
-                        minHeight: 48,
-                        px: 1,
+                        minHeight: 56,
+                        px: { xs: 1, sm: 2 },
+                        flexDirection: { xs: "column", sm: "row" },
+                        gap: { xs: 1, sm: 0 },
+                        py: { xs: 1, sm: 0 },
                       }}
                     >
-                      <Box sx={{ display: "flex", gap: 0.5 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          gap: 1.5,
+                          flexWrap: "wrap",
+                          justifyContent: "center",
+                        }}
+                      >
                         {widgetIcons.map(({ type, icon, tooltip }) => (
                           <Tooltip key={type} title={tooltip}>
-                            <motion.div
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              <IconButton
+                            <motion.div whileTap={{ scale: 0.95 }}>
+                              <WidgetIconButton
                                 size="small"
-                                color="inherit"
                                 onClick={() => handleOpenDialog(type)}
-                                sx={{
-                                  bgcolor: (theme) =>
-                                    theme.palette.mode === "light"
-                                      ? "rgba(255,255,255,0.1)"
-                                      : "rgba(255,255,255,0.2)",
-                                  borderRadius: 1,
-                                  p: 0.6,
-                                }}
+                                aria-label={tooltip}
                               >
                                 {icon}
-                              </IconButton>
+                              </WidgetIconButton>
                             </motion.div>
                           </Tooltip>
                         ))}
                       </Box>
                       <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          my: { xs: 1, sm: 0 },
+                        }}
                       >
-                        <Typography
-                          variant="subtitle1"
-                          sx={{
-                            flexGrow: 1,
-                            textAlign: "center",
-                            fontWeight: 600,
-                            letterSpacing: 0.5,
-                            color: (theme) =>
-                              theme.palette.primary.contrastText,
-                          }}
-                        >
+                        <DashboardTitle variant="subtitle1">
                           {dashboardName || "Energy Dashboard"}
-                        </Typography>
+                        </DashboardTitle>
                         <Chip
                           label={isPublished ? "Published" : "Active"}
                           color={isPublished ? "success" : "primary"}
                           size="small"
-                          sx={{ fontWeight: 500 }}
+                          sx={{
+                            fontWeight: 500,
+                            bgcolor: (theme) =>
+                              isPublished
+                                ? theme.palette.success.light
+                                : theme.palette.primary.light,
+                            color: theme.palette.primary.contrastText,
+                            boxShadow: `0 0 8px ${
+                              isPublished
+                                ? theme.palette.success.main
+                                : theme.palette.primary.main
+                            }50`,
+                          }}
                         />
                       </Box>
                       <Box sx={{ display: "flex", gap: 1 }}>
@@ -459,139 +604,241 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                         >
-                          <Button
+                          <ActionButton
                             variant="contained"
-                            color="primary"
                             size="small"
                             startIcon={isDashboardSaved ? <Update /> : <Save />}
                             onClick={handleOpenSaveDialog}
-                            sx={{
-                              textTransform: "none",
-                              borderRadius: 1,
-                              px: 1,
-                              py: 0.3,
-                              fontSize: "0.8rem",
-                            }}
+                            aria-label={
+                              isDashboardSaved
+                                ? "Update Dashboard"
+                                : "Save Dashboard"
+                            }
                           >
                             {isDashboardSaved ? "Update" : "Save"}
-                          </Button>
+                          </ActionButton>
                         </motion.div>
                         <motion.div
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                         >
-                          <Button
+                          <ActionButton
                             variant="contained"
-                            color="secondary"
                             size="small"
                             startIcon={<Publish />}
                             onClick={handlePublishDashboard}
-                            sx={{
-                              textTransform: "none",
-                              borderRadius: 1,
-                              px: 1,
-                              py: 0.3,
-                              fontSize: "0.8rem",
-                            }}
+                            aria-label="Publish Dashboard"
                           >
                             Publish
-                          </Button>
+                          </ActionButton>
                         </motion.div>
                       </Box>
                     </Toolbar>
-                  </AppBar>
+                  </StyledAppBar>
                 </motion.div>
               )}
               <Box
                 sx={{
+                  position: "sticky",
+                  top: 16,
+                  zIndex: 1100,
                   display: "flex",
                   justifyContent: "flex-end",
-                  my: 2,
                   px: { xs: 2, sm: 3 },
+                  py: 1,
+                  mx: { xs: 2, sm: 3 },
                 }}
               >
-                <Tooltip
-                  title={editMode ? "Disable Edit Mode" : "Enable Edit Mode"}
-                >
+                <Tooltip title="Dashboard Settings">
                   <motion.div
-                    initial={{ scale: 0.9 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 0.3 }}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
-                    <Box
+                    <IconButton
+                      size="small"
+                      onClick={(e) => setAnchorEl(e.currentTarget)}
+                      sx={{
+                        color: (theme) => theme.palette.primary.main,
+                        bgcolor: (theme) => "rgba(59, 130, 246, 0.15)",
+                        "&:hover": {
+                          bgcolor: (theme) => "rgba(59, 130, 246, 0.25)",
+                        },
+                        borderRadius: "8px",
+                      }}
+                    >
+                      <Settings fontSize="0.5rem" />
+                    </IconButton>
+                  </motion.div>
+                </Tooltip>
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl)}
+                  onClose={() => setAnchorEl(null)}
+                  anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "right",
+                  }}
+                  transformOrigin={{
+                    vertical: "top",
+                    horizontal: "right",
+                  }}
+                  PaperProps={{
+                    sx: {
+                      background: (theme) =>
+                        `linear-gradient(135deg, ${theme.palette.background.paper}dd, ${theme.palette.background.default}cc)`,
+                      backdropFilter: "blur(12px)",
+                      borderRadius: "12px",
+                      border: (theme) =>
+                        `1px solid ${
+                          theme.palette.mode === "light"
+                            ? "rgba(59, 130, 246, 0.3)"
+                            : "rgba(34, 197, 94, 0.3)"
+                        }`,
+                      boxShadow: (theme) =>
+                        `0 8px 24px ${
+                          theme.palette.mode === "light"
+                            ? "rgba(30, 64, 175, 0.2)"
+                            : "rgba(22, 101, 52, 0.3)"
+                        }`,
+                      mt: 1,
+                      p: 1,
+                    },
+                  }}
+                >
+                  <MenuItem
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                      py: 1.5,
+                      "&:hover": {
+                        background: (theme) =>
+                          theme.palette.mode === "light"
+                            ? "rgba(59, 130, 246, 0.1)"
+                            : "rgba(34, 197, 94, 0.1)",
+                      },
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: (theme) =>
+                          theme.palette.mode === "light"
+                            ? theme.palette.primary.main
+                            : theme.palette.primary.light,
+                        fontWeight: 500,
+                      }}
+                    >
+                      {editMode ? "Edit On" : "Edit Off"}
+                    </Typography>
+                    <EditModeSwitch
+                      checked={editMode}
+                      onChange={handleToggleEditMode}
+                    />
+                  </MenuItem>
+                  {editMode && (
+                    <MenuItem
+                      onClick={handleToggleLock}
                       sx={{
                         display: "flex",
                         alignItems: "center",
-                        background: (theme) =>
-                          theme.palette.mode === "light"
-                            ? "rgba(59, 130, 246, 0.08)"
-                            : "rgba(34, 197, 94, 0.08)",
-                        borderRadius: "20px",
-                        padding: "4px 8px",
-                        backdropFilter: "blur(8px)",
-                        boxShadow: (theme) =>
-                          theme.palette.mode === "light"
-                            ? "0 2px 8px rgba(30, 64, 175, 0.1)"
-                            : "0 2px 8px rgba(22, 101, 52, 0.1)",
-                        transition: "all 0.3s ease",
+                        gap: 2,
+                        py: 1.5,
+                        "&:hover": {
+                          background: (theme) =>
+                            theme.palette.mode === "light"
+                              ? "rgba(59, 130, 246, 0.1)"
+                              : "rgba(34, 197, 94, 0.1)",
+                        },
                       }}
                     >
                       <Typography
                         variant="caption"
                         sx={{
-                          mr: 1,
                           color: (theme) =>
-                            theme.palette.mode === "light"
-                              ? theme.palette.primary.main
-                              : theme.palette.primary.light,
+                            isLocked
+                              ? theme.palette.error.main
+                              : theme.palette.primary.main,
                           fontWeight: 500,
                         }}
                       >
-                        {editMode ? "Edit On" : "Edit Off"}
+                        {isLocked ? "Unlock Widgets" : "Lock Widgets"}
                       </Typography>
-                      <EditModeSwitch
-                        checked={editMode}
-                        onChange={handleToggleEditMode}
-                      />
-                    </Box>
-                  </motion.div>
-                </Tooltip>
+                      {isLocked ? (
+                        <Lock fontSize="small" />
+                      ) : (
+                        <LockOpen fontSize="small" />
+                      )}
+                    </MenuItem>
+                  )}
+                </Menu>
               </Box>
-              <Grid
-                container
-                spacing={{ xs: 2, sm: 3, md: 4 }}
-                sx={{ px: { xs: 2, sm: 3 } }}
-              >
-                {widgets.map((widget, index) => (
-                  <Grid item xs={12} sm={6} md={4} key={widget.id}>
-                    <Fade in timeout={800 + index * 200}>
-                      <Box
-                        sx={{
-                          height: "100%",
-                          bgcolor: (theme) => theme.palette.background.paper,
-                          borderRadius: (theme) => theme.shape.borderRadius,
+              <Box ref={gridRef}>
+                <ReactGridLayout
+                  className="layout"
+                  layout={layout}
+                  onLayoutChange={handleLayoutChange}
+                  cols={12}
+                  rowHeight={40}
+                  width={gridWidth || window.innerWidth * 0.95}
+                  isDraggable={!isLocked}
+                  isResizable={!isLocked}
+                  compactType="vertical"
+                  preventCollision={false}
+                  margin={[16, 16]} // Add consistent margin between grid items
+                  containerPadding={[16, 16]} // Add padding inside the grid container
+                  onDragStop={(layout, oldItem, newItem) => {
+                    const maxCols = 12;
+                    const marginPx = 16; // Match the margin value in pixels
+                    const containerWidth =
+                      gridWidth || window.innerWidth * 0.95;
+                    const colWidth = (containerWidth - 2 * marginPx) / maxCols; // Calculate column width
+
+                    // Constrain x to stay within bounds
+                    if (newItem.x < 0) {
+                      newItem.x = 0;
+                    }
+                    // Ensure widget doesn't exceed right boundary
+                    const maxX = maxCols - newItem.w;
+                    if (newItem.x > maxX) {
+                      newItem.x = maxX;
+                    }
+                  }}
+                  style={{
+                    width: "100%",
+                  }}
+                >
+                  {widgets.map((widget, index) => (
+                    <Box
+                      key={widget.id}
+                      sx={{
+                        bgcolor:
+                          widget.data.backgroundColor ||
+                          theme.palette.background.paper,
+                        boxShadow: (theme) =>
+                          theme.palette.mode === "light"
+                            ? "0 4px 12px rgba(0,0,0,0.08)"
+                            : "0 4px 12px rgba(0,0,0,0.2)",
+                        transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                        "&:hover": {
                           boxShadow: (theme) =>
-                            theme.palette.mode === "light"
-                              ? "0 4px 12px rgba(0,0,0,0.08)"
-                              : "0 4px 12px rgba(0,0,0,0.2)",
-                          p: 2,
-                          transition:
-                            "transform 0.3s ease, box-shadow 0.3s ease",
-                          "&:hover": {
-                            transform: "translateY(-4px)",
-                            boxShadow: (theme) =>
-                              theme.palette.mode === "light"
+                            editMode && !isLocked
+                              ? theme.palette.mode === "light"
                                 ? "0 6px 16px rgba(0,0,0,0.12)"
-                                : "0 6px 16px rgba(0,0,0,0.3)",
-                          },
-                        }}
-                      >
-                        {renderWidget(widget)}
-                      </Box>
-                    </Fade>
-                  </Grid>
-                ))}
-              </Grid>
+                                : "0 6px 16px rgba(0,0,0,0.3)"
+                              : "none",
+                        },
+                      }}
+                    >
+                      <Fade in timeout={800 + index * 200}>
+                        <div style={{ height: "100%", width: "100%" }}>
+                          {renderWidget(widget)}
+                        </div>
+                      </Fade>
+                    </Box>
+                  ))}
+                </ReactGridLayout>
+              </Box>
             </>
           )}
         </Box>
@@ -601,27 +848,34 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
         onClose={handleCloseDialog}
         widgetType={selectedWidgetType}
         onSubmit={handleAddWidget}
+        initialData={editingWidget?.data}
       />
-      <Dialog
+      <WidgetPropertiesDialog
+        open={openPropertiesDialog}
+        onClose={handleClosePropertiesDialog}
+        widget={selectedWidget}
+        onSubmit={handleUpdateWidgetProperties}
+      />
+      <StyledWidgetDialog
         open={openSaveDialog}
         onClose={handleCloseSaveDialog}
-        sx={{
-          "& .MuiDialog-paper": {
-            borderRadius: (theme) => theme.shape.borderRadius,
-            p: 2,
-            bgcolor: (theme) => theme.palette.background.paper,
-          },
-        }}
+        maxWidth="sm"
+        fullWidth
       >
         <DialogTitle
-          sx={{ fontWeight: 600, color: (theme) => theme.palette.primary.main }}
+          sx={{
+            fontWeight: "bold",
+            color: (theme) => theme.palette.primary.main,
+            textAlign: "center",
+            textShadow: (theme) => `0 0 8px ${theme.palette.primary.light}80`,
+          }}
         >
           {isDashboardSaved ? "Update Dashboard" : "Save Dashboard"}
         </DialogTitle>
         <DialogContent>
-          <FormControl fullWidth sx={{ mb: 2, mt: 1 }}>
+          <FormControl fullWidth sx={{ mb: 2.5, mt: 1.5 }}>
             <InputLabel id="patron-select-label">Select Patron</InputLabel>
-            <Select
+            <StyledSelect
               labelId="patron-select-label"
               value={patron}
               label="Select Patron"
@@ -633,9 +887,9 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
                   {p}
                 </MenuItem>
               ))}
-            </Select>
+            </StyledSelect>
           </FormControl>
-          <TextField
+          <StyledTextField
             fullWidth
             label="Dashboard Name"
             value={dashboardName}
@@ -645,6 +899,13 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
             }}
             error={!!nameError}
             helperText={nameError}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Title />
+                </InputAdornment>
+              ),
+            }}
             sx={{ borderRadius: (theme) => theme.shape.borderRadius }}
           />
         </DialogContent>
@@ -654,23 +915,30 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
             sx={{
               textTransform: "none",
               color: (theme) => theme.palette.text.secondary,
+              borderRadius: "10px",
+              px: 3,
+              "&:hover": {
+                background: (theme) => theme.palette.background.default,
+              },
             }}
           >
             Cancel
           </Button>
-          <Button
-            onClick={handleSaveDashboard}
-            variant="contained"
-            color="primary"
-            sx={{
-              textTransform: "none",
-              borderRadius: (theme) => theme.shape.borderRadius,
-            }}
-          >
-            {isDashboardSaved ? "Update" : "Save"}
-          </Button>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <ActionButton
+              variant="contained"
+              onClick={handleSaveDashboard}
+              sx={{
+                textTransform: "none",
+                borderRadius: (theme) => theme.shape.borderRadius,
+                px: 3,
+              }}
+            >
+              {isDashboardSaved ? "Update" : "Save"}
+            </ActionButton>
+          </motion.div>
         </DialogActions>
-      </Dialog>
+      </StyledWidgetDialog>
       <SnackbarComponent />
     </Box>
   );

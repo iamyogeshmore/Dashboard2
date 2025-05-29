@@ -22,11 +22,10 @@ import {
   Checkbox,
 } from "@mui/material";
 import { Settings, Close, ColorLens } from "@mui/icons-material";
-import { Line, Bar } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   LineElement,
-  BarElement,
   PointElement,
   LinearScale,
   CategoryScale,
@@ -41,7 +40,6 @@ import { ChromePicker } from "react-color";
 
 ChartJS.register(
   LineElement,
-  BarElement,
   PointElement,
   LinearScale,
   CategoryScale,
@@ -67,25 +65,27 @@ const mockData = {
   },
 };
 
-const GraphWidget = ({ data, onUpdate }) => {
-  // Add default ranges if not provided
-  const defaultRanges = [
-    { min: 0, max: 100, color: "#4caf50" },
-    { min: 100, max: 200, color: "#ffeb3b" },
-    { min: 200, max: 300, color: "#f44336" },
-  ];
+const defaultRanges = [
+  { min: 0, max: 100, color: "#4caf50" },
+  { min: 100, max: 200, color: "#ffeb3b" },
+  { min: 200, max: 300, color: "#f44336" },
+];
+
+const MultiAxisGraphWidget = ({ data, onUpdate }) => {
+  const ranges = data.ranges || defaultRanges;
 
   const [chartData, setChartData] = useState({
     labels: [],
     datasets: [
       {
-        label: data?.measurand || "Value",
+        label: data.measurand || "Value",
         data: [],
-        borderColor: data?.primaryColor || "#2196f3",
-        backgroundColor: data?.primaryColor || "#2196f3",
-        fill: data?.graphType === "area",
+        borderColor: data.primaryColor || "#2196f3",
+        backgroundColor: data.primaryColor || "#2196f3",
+        yAxisID: "y0",
+        fill: data.graphType === "area",
         tension:
-          data?.graphType === "area" || data?.graphType === "line" ? 0.4 : 0,
+          data.graphType === "area" || data.graphType === "line" ? 0.4 : 0,
         pointRadius: 4,
         pointHoverRadius: 6,
       },
@@ -106,7 +106,7 @@ const GraphWidget = ({ data, onUpdate }) => {
     watch,
   } = useForm({
     defaultValues: {
-      graphType: data.graphType || "bar",
+      graphType: data.graphType || "line",
       resetInterval: (data.resetInterval || 5000).toString(),
       compareMeasurands: data.compareMeasurands || [],
       measurandColors: data.measurandColors || {},
@@ -123,7 +123,7 @@ const GraphWidget = ({ data, onUpdate }) => {
 
   useEffect(() => {
     reset({
-      graphType: data.graphType || "bar",
+      graphType: data.graphType || "line",
       resetInterval: (data.resetInterval || 5000).toString(),
       compareMeasurands: data.compareMeasurands || [],
       measurandColors: data.measurandColors || {},
@@ -163,7 +163,6 @@ const GraphWidget = ({ data, onUpdate }) => {
     const updateChartData = () => {
       setChartData((prev) => {
         const newLabel = new Date().toLocaleTimeString();
-        const ranges = data?.ranges || defaultRanges;
         const min = Number(ranges[0]?.min) || 0;
         const max = Number(ranges[ranges.length - 1]?.max) || 100;
         const newValue = generateRandomData(min, max);
@@ -172,20 +171,19 @@ const GraphWidget = ({ data, onUpdate }) => {
         );
         const datasets = [
           {
-            label: data?.measurand || "Value",
+            label: data.measurand || "Value",
             data: [...prev.datasets[0].data, newValue].slice(
               -Number(watch("xAxisConfig") || 10)
             ),
             borderColor: primaryColor || "#2196f3",
             backgroundColor:
-              data?.graphType === "area"
+              data.graphType === "area"
                 ? `${primaryColor}80`
                 : primaryColor || "#2196f3",
-            fill: data?.graphType === "area",
+            yAxisID: "y0",
+            fill: data.graphType === "area",
             tension:
-              data?.graphType === "area" || data?.graphType === "line"
-                ? 0.4
-                : 0,
+              data.graphType === "area" || data.graphType === "line" ? 0.4 : 0,
             pointRadius: 4,
             pointHoverRadius: 6,
           },
@@ -201,14 +199,13 @@ const GraphWidget = ({ data, onUpdate }) => {
             ].slice(-Number(watch("xAxisConfig") || 10)),
             borderColor: measurandColors[measurand] || generateRandomColor(),
             backgroundColor:
-              data?.graphType === "area"
+              data.graphType === "area"
                 ? `${measurandColors[measurand] || generateRandomColor()}80`
-                : measurandColors[measurand] || generateRandomColor(),
-            fill: data?.graphType === "area",
+                : `${measurandColors[measurand] || generateRandomColor()}`,
+            yAxisID: `y${index + 1}`,
+            fill: data.graphType === "area",
             tension:
-              data?.graphType === "area" || data?.graphType === "line"
-                ? 0.4
-                : 0,
+              data.graphType === "area" || data.graphType === "line" ? 0.4 : 0,
             pointRadius: 4,
             pointHoverRadius: 6,
           });
@@ -225,7 +222,7 @@ const GraphWidget = ({ data, onUpdate }) => {
     updateChartData();
     const interval = setInterval(
       updateChartData,
-      Number(data?.resetInterval) || 5000
+      Number(data.resetInterval) || 5000
     );
 
     return () => clearInterval(interval);
@@ -235,19 +232,34 @@ const GraphWidget = ({ data, onUpdate }) => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        display: false,
+        display: true,
+        labels: {
+          font: {
+            family: data.valueFontFamily || "Roboto",
+            weight: "normal",
+            style: "normal",
+          },
+        },
       },
       tooltip: {
         enabled: true,
         backgroundColor: "rgba(0,0,0,0.8)",
-        titleFont: { family: data?.titleFontFamily || "Roboto", size: 14 },
-        bodyFont: { family: data?.titleFontFamily || "Roboto", size: 12 },
+        titleFont: {
+          family: data.titleFontFamily || "Roboto",
+          weight: "normal",
+          style: "normal",
+        },
+        bodyFont: {
+          family: data.valueFontFamily || "Roboto",
+          weight: "normal",
+          style: "normal",
+        },
         padding: 12,
         cornerRadius: 8,
         callbacks: {
           label: (context) => {
             const datasetIndex = context.datasetIndex;
-            const value = context.parsed.y.toFixed(2);
+            const value = context.parsed.y.toFixed(1);
             const label = context.dataset.label;
             return `${label}: ${value}`;
           },
@@ -255,26 +267,6 @@ const GraphWidget = ({ data, onUpdate }) => {
       },
     },
     scales: {
-      y: {
-        beginAtZero: true,
-        min: Number((data?.ranges || defaultRanges)[0]?.min) || 0,
-        max:
-          Number(
-            (data?.ranges || defaultRanges)[
-              (data?.ranges || defaultRanges).length - 1
-            ]?.max
-          ) || 100,
-        grid: {
-          color: "rgba(0,0,0,0.1)",
-        },
-        ticks: {
-          font: {
-            family: data?.titleFontFamily || "Roboto",
-            size: 12,
-          },
-          color: data?.titleColor || "#000000",
-        },
-      },
       x: {
         display: !hideXAxis,
         grid: {
@@ -282,14 +274,77 @@ const GraphWidget = ({ data, onUpdate }) => {
         },
         ticks: {
           font: {
-            family: data?.titleFontFamily || "Roboto",
-            size: 12,
+            family: data.valueFontFamily || "Roboto",
+            weight: "normal",
+            style: "normal",
           },
-          color: data?.titleColor || "#000000",
           maxRotation: 45,
           minRotation: 45,
         },
       },
+      y0: {
+        type: "linear",
+        display: true,
+        position: "left",
+        beginAtZero: true,
+        min: Number(ranges[0]?.min) || 0,
+        max: Number(ranges[ranges.length - 1]?.max) || 100,
+
+        ticks: {
+          font: {
+            family: data.valueFontFamily || "Roboto",
+
+            weight: "normal",
+            style: "normal",
+          },
+        },
+        title: {
+          display: true,
+          text: data.measurand || "Value",
+          font: {
+            family: data.titleFontFamily || "Roboto",
+            weight: "normal",
+            style: "normal",
+          },
+        },
+      },
+      ...compareMeasurands.reduce(
+        (acc, measurand, index) => ({
+          ...acc,
+          [`y${index + 1}`]: {
+            type: "linear",
+            display: true,
+            position: index % 2 === 0 ? "right" : "left",
+            beginAtZero: true,
+            min: Number(ranges[0]?.min) || 0,
+            max: Number(ranges[ranges.length - 1]?.max) || 100,
+            grid: {
+              drawOnChartArea: false,
+            },
+            ticks: {
+              font: {
+                family: data.valueFontFamily || "Roboto",
+                size: 12,
+                weight: "normal",
+                style: "normal",
+              },
+              color: measurandColors[measurand] || generateRandomColor(),
+            },
+            title: {
+              display: true,
+              text: measurand,
+              font: {
+                family: data.titleFontFamily || "Roboto",
+                size: data.titleFontSize || 12,
+                weight: "normal",
+                style: "normal",
+              },
+              color: measurandColors[measurand] || generateRandomColor(),
+            },
+          },
+        }),
+        {}
+      ),
     },
     animation: {
       duration: 1000,
@@ -308,7 +363,7 @@ const GraphWidget = ({ data, onUpdate }) => {
       <Typography variant="caption">
         Measurand: {data?.measurand || "N/A"}
       </Typography>
-      {compareMeasurands?.length > 0 && (
+      {compareMeasurands.length > 0 && (
         <>
           <br />
           <Typography variant="caption">
@@ -320,7 +375,7 @@ const GraphWidget = ({ data, onUpdate }) => {
       <Typography variant="caption">Timestamp: {timestamp}</Typography>
       <br />
       <Typography variant="caption">Ranges:</Typography>
-      {(data?.ranges || defaultRanges).map((range, index) => (
+      {ranges.map((range, index) => (
         <Typography variant="caption" key={index}>
           Range {index + 1}: {range.min} - {range.max} ({range.color})
         </Typography>
@@ -356,94 +411,93 @@ const GraphWidget = ({ data, onUpdate }) => {
       primaryColor: formData.primaryColor,
       hideXAxis: formData.hideXAxis,
       xAxisConfig: Number(formData.xAxisConfig),
+      ranges: ranges, // Ensure ranges are included
     };
     onUpdate(updatedData);
     setOpenSettings(false);
   };
 
   return (
-    <Card
-      sx={{
-        height: "100%",
-        width: "100%",
-        background: data.backgroundColor || "#ffffff",
-        border: `${data.borderWidth || 1}px solid`,
-        borderRadius: `${data.borderRadius || 4}px`,
-        boxShadow: (theme) =>
-          `0 4px 20px ${
-            theme.palette.mode === "light"
-              ? "rgba(0,0,0,0.1)"
-              : "rgba(0,0,0,0.3)"
-          }`,
-        transition: "transform 0.3s ease, box-shadow 0.3s ease",
-        "&:hover": {
-          boxShadow: (theme) =>
-            `0 8px 24px ${
-              theme.palette.mode === "light"
-                ? "rgba(0,0,0,0.15)"
-                : "rgba(0,0,0,0.4)"
-            }`,
-        },
-      }}
-    >
-      <CardContent
+    <>
+      <Card
         sx={{
           height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          p: 2,
+          width: "100%",
+          background: data.backgroundColor,
+          border: `${data.borderWidth || 1}px solid ${
+            data.borderColor || "#e0e0e0"
+          }`,
+          borderRadius: `${data.borderRadius || 4}px`,
+          boxShadow: (theme) =>
+            `0 4px 20px ${
+              theme.palette.mode === "light"
+                ? "rgba(0,0,0,0.1)"
+                : "rgba(0,0,0,0.3)"
+            }`,
+          transition: "transform 0.3s ease, box-shadow 0.3s ease",
+          "&:hover": {
+            boxShadow: (theme) =>
+              `0 8px 24px ${
+                theme.palette.mode === "light"
+                  ? "rgba(0,0,0,0.2)"
+                  : "rgba(0,0,0,0.4)"
+              }`,
+          },
         }}
       >
-        <Tooltip title={tooltipContent} placement="top">
-          <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <IconButton
-                size="small"
-                onClick={handleOpenSettings}
-                sx={{
-                  mr: 1,
-                  bgcolor: (theme) => `${theme.palette.primary.main}20`,
-                  "&:hover": {
-                    bgcolor: (theme) => `${theme.palette.primary.main}40`,
-                  },
-                }}
-              >
-                <Settings fontSize="small" />
-              </IconButton>
-            </motion.div>
-            <CardTitle
-              sx={{
-                fontFamily: data.titleFontFamily || "Roboto",
-                fontSize: `${data.titleFontSize || 16}px`,
-                color: data.titleColor || "inherit",
-                fontWeight: 600,
-                textShadow: (theme) =>
-                  `0 0 8px ${theme.palette.primary.light}80`,
-              }}
-            >
-              {data.widgetName || "Graph Widget"}
-            </CardTitle>
-          </Box>
-        </Tooltip>
-        <Box
+        <CardContent
           sx={{
-            flexGrow: 1,
-            minHeight: 0,
-            p: 1,
-            mb: hideXAxis ? 1.25 : 0, // 10px bottom margin when x-axis is hidden
-            borderRadius: 2,
-            background: data.backgroundColor || "#ffffff",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            p: 2,
           }}
         >
-          {data.graphType === "line" ? (
+          <Tooltip title={tooltipContent} placement="top">
+            <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <IconButton
+                  size="small"
+                  onClick={handleOpenSettings}
+                  sx={{
+                    mr: 1,
+                    bgcolor: (theme) => `${theme.palette.primary.main}20`,
+                    "&:hover": {
+                      bgcolor: (theme) => `${theme.palette.primary.main}40`,
+                    },
+                  }}
+                >
+                  <Settings fontSize="small" />
+                </IconButton>
+              </motion.div>
+              <CardTitle
+                sx={{
+                  fontFamily: data?.titleFontFamily || "Roboto",
+                  fontSize: `${data?.titleFontSize || 16}px`,
+                  color: data?.titleColor || "inherit",
+                  fontWeight: 600,
+                  textShadow: (theme) =>
+                    `0 0 8px ${theme.palette.primary.light}80`,
+                }}
+              >
+                {data.widgetName || "Multi-Axis Graph Widget"}
+              </CardTitle>
+            </Box>
+          </Tooltip>
+          <Box
+            sx={{
+              flexGrow: 1,
+              minHeight: 0,
+              p: 1,
+              mb: hideXAxis ? 1.25 : 0,
+              borderRadius: 2,
+              background: data.backgroundColor,
+            }}
+          >
             <Line data={chartData} options={chartOptions} />
-          ) : data.graphType === "area" ? (
-            <Line data={chartData} options={chartOptions} />
-          ) : (
-            <Bar data={chartData} options={chartOptions} />
-          )}
-        </Box>
-      </CardContent>
+          </Box>
+        </CardContent>
+      </Card>
 
       <Dialog
         open={openSettings}
@@ -477,7 +531,7 @@ const GraphWidget = ({ data, onUpdate }) => {
           <Typography
             variant="h6"
             sx={{
-              color: (theme) => theme.palette.primary.main,
+              color: (theme) => theme.palette.primary.dark,
               fontWeight: 600,
             }}
           >
@@ -498,7 +552,6 @@ const GraphWidget = ({ data, onUpdate }) => {
                   rules={{ required: "Graph Type is required" }}
                   render={({ field }) => (
                     <Select {...field} label="Graph Type">
-                      <MenuItem value="bar">Bar</MenuItem>
                       <MenuItem value="line">Line</MenuItem>
                       <MenuItem value="area">Area</MenuItem>
                     </Select>
@@ -518,7 +571,7 @@ const GraphWidget = ({ data, onUpdate }) => {
                   render={({ field }) => (
                     <Select
                       {...field}
-                      label="Compare Measurands (Max 10)"
+                      label="Compare Measurands"
                       multiple
                       onChange={(e) => {
                         if (e.target.value.length <= 10) {
@@ -716,8 +769,8 @@ const GraphWidget = ({ data, onUpdate }) => {
           </motion.div>
         </DialogActions>
       </Dialog>
-    </Card>
+    </>
   );
 };
 
-export default GraphWidget;
+export default MultiAxisGraphWidget;

@@ -1,15 +1,143 @@
+// Navbar.js
 import { useState, useEffect } from "react";
-import { AppBar, Toolbar, Box, Tooltip, Chip } from "@mui/material";
-import { Link, useLocation, useNavigate } from "react-router-dom"; // Added useNavigate
+import {
+  AppBar,
+  Toolbar,
+  Box,
+  Tooltip,
+  Chip,
+  IconButton,
+  Avatar,
+  Badge,
+  Menu,
+  MenuItem,
+  Divider,
+  ListItemIcon,
+  ListItemText,
+} from "@mui/material";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Person,
+  AccountCircle,
+  Settings,
+  ExitToApp,
+  Notifications,
+  Help,
+  Fullscreen,
+  FullscreenExit,
+} from "@mui/icons-material";
 import { motion } from "framer-motion";
 import DropdownMenu from "./DropdownMenu";
 import ThemeToggle from "../../ThemeToggle/ThemeToggle";
-import { EnergyLabel, NavButton, TimeDisplay } from "./Navbar.styles";
+import {
+  EnergyLabel,
+  TimeDisplay,
+  UserIconButton,
+  AnimatedEnergiSpeak,
+} from "./Navbar.styles";
+
+// Animated EnergiSpeak Component
+const EnergispeakAnimated = () => {
+  const [sparkPosition, setSparkPosition] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSparkPosition((prev) => (prev < 100 ? prev + 5 : 0));
+    }, 150);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <AnimatedEnergiSpeak component={Link} to="/">
+      <Box
+        sx={{
+          position: "relative",
+          overflow: "hidden",
+          display: "inline-block",
+          px: 2,
+          py: 1,
+        }}
+      >
+        {/* Main text with gradient */}
+        <Box
+          component="span"
+          sx={{
+            fontSize: "1.5rem",
+            fontWeight: 700,
+            position: "relative",
+            zIndex: 10,
+            background: (theme) =>
+              theme.palette.mode === "light"
+                ? "linear-gradient(45deg,rgb(30, 64, 175),rgb(30, 64, 175))"
+                : "linear-gradient(45deg,rgb(14, 101, 46),rgb(14, 101, 46))",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            textShadow: (theme) =>
+              theme.palette.mode === "light"
+                ? "0 0 10px rgba(30, 64, 175, 0.7)"
+                : "0 0 10px rgba(34, 197, 94, 0.7)",
+          }}
+        >
+          Energi
+          <Box
+            component="span"
+            sx={{
+              color: "#FFFFFF",
+              textShadow: (theme) =>
+                theme.palette.mode === "light"
+                  ? "0 0 8px rgba(59, 130, 246, 0.5)"
+                  : "0 0 8px rgba(74, 222, 128, 0.5)",
+            }}
+          >
+            Speak
+          </Box>
+        </Box>
+
+        {/* Moving electricity spark */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            height: "100%",
+            width: "2px",
+            opacity: 0.8,
+            filter: "blur(1px)",
+            left: `${sparkPosition}%`,
+          }}
+        />
+
+        {/* Horizontal energy line */}
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            height: "2px",
+            width: `${sparkPosition}%`,
+            background: (theme) =>
+              theme.palette.mode === "light"
+                ? "linear-gradient(to right, transparent,rgb(3, 23, 91), #3B82F6)"
+                : "linear-gradient(to right, transparent,rgb(3, 85, 44), #4ADE80)",
+            boxShadow: (theme) =>
+              theme.palette.mode === "light"
+                ? "0 0 10px #1E40AF"
+                : "0 0 10px #22C55E",
+            transition: "width 0.15s ease-out",
+          }}
+        />
+      </Box>
+    </AnimatedEnergiSpeak>
+  );
+};
 
 const Navbar = ({
   onLoadDashboard,
   onCreateNewDashboard,
   currentDashboardId,
+  isFullScreen,
+  toggleFullScreen,
 }) => {
   const [currentTime, setCurrentTime] = useState(
     new Date().toLocaleString("en-US", {
@@ -18,14 +146,16 @@ const Navbar = ({
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
+      second: "2-digit",
       hour12: false,
     })
   );
   const [showRouteName, setShowRouteName] = useState(false);
   const [savedDashboards, setSavedDashboards] = useState([]);
+  const [userMenuAnchor, setUserMenuAnchor] = useState(null);
   const location = useLocation();
-  const navigate = useNavigate(); // For programmatic navigation
-  const [openDropdown, setOpenDropdown] = useState(false); // Track dropdown state
+  const navigate = useNavigate();
+  const [openDashboardDropdown, setOpenDashboardDropdown] = useState(false);
 
   // Update time every second
   useEffect(() => {
@@ -37,6 +167,7 @@ const Navbar = ({
           year: "numeric",
           hour: "2-digit",
           minute: "2-digit",
+          second: "2-digit",
           hour12: false,
         })
       );
@@ -126,11 +257,46 @@ const Navbar = ({
   // Handle Dashboard tab click
   const handleDashboardClick = () => {
     if (location.pathname !== "/") {
-      // If not on "/", navigate to "/" to load published dashboard
       navigate("/");
     } else {
-      // If on "/", toggle dropdown
-      setOpenDropdown(true);
+      setOpenDashboardDropdown(true);
+    }
+  };
+
+  // Handle User menu
+  const handleUserMenuOpen = (event) => {
+    setUserMenuAnchor(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setUserMenuAnchor(null);
+  };
+
+  const handleUserAction = (action) => {
+    handleUserMenuClose();
+    switch (action) {
+      case "profile":
+        console.log("Navigate to profile");
+        // navigate('/profile');
+        break;
+      case "settings":
+        console.log("Navigate to settings");
+        // navigate('/settings');
+        break;
+      case "notifications":
+        console.log("Navigate to notifications");
+        // navigate('/notifications');
+        break;
+      case "help":
+        console.log("Navigate to help");
+        // navigate('/help');
+        break;
+      case "logout":
+        console.log("Logout user");
+        // Add logout logic here
+        break;
+      default:
+        break;
     }
   };
 
@@ -205,9 +371,9 @@ const Navbar = ({
               </svg>
             }
             isActive={location.pathname === "/"}
-            onClick={handleDashboardClick} // Custom click handler
-            open={openDropdown}
-            onClose={() => setOpenDropdown(false)}
+            onClick={handleDashboardClick}
+            open={openDashboardDropdown}
+            onClose={() => setOpenDashboardDropdown(false)}
           />
           <DropdownMenu
             label="Views"
@@ -275,11 +441,163 @@ const Navbar = ({
           <Tooltip title="Toggle Light/Dark Mode">
             <ThemeToggle />
           </Tooltip>
+          <Tooltip
+            title={isFullScreen ? "Exit Full Screen" : "Enter Full Screen"}
+            placement="bottom"
+          >
+            <UserIconButton
+              onClick={toggleFullScreen}
+              aria-label="toggle full screen"
+            >
+              {isFullScreen ? (
+                <FullscreenExit sx={{ fontSize: 28 }} />
+              ) : (
+                <Fullscreen sx={{ fontSize: 28 }} />
+              )}
+            </UserIconButton>
+          </Tooltip>
           <TimeDisplay>{currentTime}</TimeDisplay>
+          <Tooltip title="Account Menu" placement="bottom">
+            <UserIconButton
+              onClick={handleUserMenuOpen}
+              aria-label="account menu"
+              aria-controls={userMenuAnchor ? "user-menu" : undefined}
+              aria-haspopup="true"
+              aria-expanded={userMenuAnchor ? "true" : undefined}
+            >
+              <Badge
+                overlap="circular"
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                variant="dot"
+                color="success"
+              >
+                <Avatar
+                  sx={{
+                    bgcolor: "transparent",
+                    color: "inherit",
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  <AccountCircle sx={{ fontSize: 28 }} />
+                </Avatar>
+              </Badge>
+            </UserIconButton>
+          </Tooltip>
+          <Menu
+            id="user-menu"
+            anchorEl={userMenuAnchor}
+            open={Boolean(userMenuAnchor)}
+            onClose={handleUserMenuClose}
+            anchorOrigin={{
+              vertical: "bottom",
+              horizontal: "right",
+            }}
+            transformOrigin={{
+              vertical: "top",
+              horizontal: "right",
+            }}
+            PaperProps={{
+              elevation: 8,
+              sx: {
+                minWidth: 200,
+                mt: 1,
+                backgroundImage: (theme) =>
+                  theme.palette.mode === "light"
+                    ? "linear-gradient(135deg, #FFFFFF, #F8FAFC)"
+                    : "linear-gradient(135deg, #1F2937, #111827)",
+                color: (theme) =>
+                  theme.palette.mode === "light" ? "#1E293B" : "#F3F4F6",
+                border: (theme) =>
+                  `1px solid ${
+                    theme.palette.mode === "light"
+                      ? "rgba(59, 130, 246, 0.2)"
+                      : "rgba(34, 197, 94, 0.2)"
+                  }`,
+                borderRadius: 2,
+                boxShadow: (theme) =>
+                  theme.palette.mode === "light"
+                    ? "0 8px 32px rgba(59, 130, 246, 0.15)"
+                    : "0 8px 32px rgba(34, 197, 94, 0.15)",
+                "& .MuiMenuItem-root": {
+                  borderRadius: 1,
+                  margin: "4px 8px",
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "light"
+                        ? "rgba(59, 130, 246, 0.1)"
+                        : "rgba(34, 197, 94, 0.1)",
+                    transform: "translateX(4px)",
+                  },
+                },
+              },
+            }}
+          >
+            <Box sx={{ px: 2, py: 1, borderBottom: 1, borderColor: "divider" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Avatar sx={{ width: 32, height: 32 }}>
+                  <Person />
+                </Avatar>
+                <Box>
+                  <Box sx={{ fontWeight: 600, fontSize: "0.9rem" }}>
+                    John Doe
+                  </Box>
+                  <Box
+                    sx={{
+                      fontSize: "0.75rem",
+                      color: "text.secondary",
+                      opacity: 0.8,
+                    }}
+                  >
+                    john.doe@example.com
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+            <MenuItem onClick={() => handleUserAction("profile")}>
+              <ListItemIcon>
+                <Person fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Profile</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={() => handleUserAction("settings")}>
+              <ListItemIcon>
+                <Settings fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Settings</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={() => handleUserAction("notifications")}>
+              <ListItemIcon>
+                <Badge badgeContent={3} color="error">
+                  <Notifications fontSize="small" />
+                </Badge>
+              </ListItemIcon>
+              <ListItemText>Notifications</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={() => handleUserAction("help")}>
+              <ListItemIcon>
+                <Help fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Help & Support</ListItemText>
+            </MenuItem>
+            <Divider sx={{ my: 1 }} />
+            <MenuItem
+              onClick={() => handleUserAction("logout")}
+              sx={{
+                color: (theme) => theme.palette.error.main,
+                "&:hover": {
+                  backgroundColor: (theme) => `${theme.palette.error.main}10`,
+                },
+              }}
+            >
+              <ListItemIcon>
+                <ExitToApp fontSize="small" sx={{ color: "error.main" }} />
+              </ListItemIcon>
+              <ListItemText>Logout</ListItemText>
+            </MenuItem>
+          </Menu>
+          <EnergispeakAnimated />
         </Box>
-        <EnergyLabel component={Link} to="/" className="energy-label">
-          EnergiSpeak
-        </EnergyLabel>
       </Toolbar>
     </AppBar>
   );

@@ -1,3 +1,4 @@
+// App.js
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -17,8 +18,8 @@ import GenerateReports from "./components/Reports/GenerateReports";
 import HistoricalDataDisplayTV from "./components/Views/TerminalView/HistoricalDataDisplayTV";
 import HistoricalDataDisplayMV from "./components/Views/MeasurandView/HistoricalDataDisplayMV";
 import { useThemeContext } from "./context/ThemeContext";
-import { useRef, useState } from "react";
-import { useLocation } from "react-router-dom"; // Import useLocation
+import { useRef, useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import "./index.css";
 
 function AppContent({
@@ -29,13 +30,80 @@ function AppContent({
 }) {
   const { mode } = useThemeContext();
   const theme = getTheme(mode);
-  const location = useLocation(); // Now safe to use within Router context
+  const location = useLocation();
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   // Update currentDashboardId when loading a dashboard
   const handleLoadDashboard = (dashboardId) => {
     setCurrentDashboardId(dashboardId);
     onLoadDashboard.current(dashboardId);
   };
+
+  // Toggle full-screen mode
+  const toggleFullScreen = () => {
+    if (!isFullScreen) {
+      const element = document.documentElement;
+      if (element.requestFullscreen) {
+        element.requestFullscreen();
+      } else if (element.webkitRequestFullscreen) {
+        // Safari
+        element.webkitRequestFullscreen();
+      } else if (element.msRequestFullscreen) {
+        // IE/Edge
+        element.msRequestFullscreen();
+      }
+      setIsFullScreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        // Safari
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        // IE/Edge
+        document.msExitFullscreen();
+      }
+      setIsFullScreen(false);
+    }
+  };
+
+  // Handle F11 key press
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "F11") {
+        event.preventDefault(); // Prevent default browser full-screen
+        toggleFullScreen();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Listen for full-screen change events to sync state
+    const handleFullScreenChange = () => {
+      setIsFullScreen(
+        !!document.fullscreenElement ||
+          !!document.webkitFullscreenElement ||
+          !!document.msFullscreenElement
+      );
+    };
+
+    document.addEventListener("fullscreenchange", handleFullScreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullScreenChange);
+    document.addEventListener("msfullscreenchange", handleFullScreenChange);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("fullscreenchange", handleFullScreenChange);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        handleFullScreenChange
+      );
+      document.removeEventListener(
+        "msfullscreenchange",
+        handleFullScreenChange
+      );
+    };
+  }, [isFullScreen]);
 
   return (
     <MuiThemeProvider theme={theme}>
@@ -47,11 +115,15 @@ function AppContent({
           flexDirection: "column",
         }}
       >
-        <Navbar
-          onLoadDashboard={onLoadDashboard}
-          onCreateNewDashboard={onCreateNewDashboard}
-          currentDashboardId={currentDashboardId}
-        />
+        {!isFullScreen && (
+          <Navbar
+            onLoadDashboard={onLoadDashboard}
+            onCreateNewDashboard={onCreateNewDashboard}
+            currentDashboardId={currentDashboardId}
+            isFullScreen={isFullScreen}
+            toggleFullScreen={toggleFullScreen}
+          />
+        )}
         <div style={{ flex: 1 }}>
           <Routes>
             <Route
@@ -91,7 +163,7 @@ function AppContent({
             <Route path="/contact" element={<div>Contact Page</div>} />
           </Routes>
         </div>
-        <Footer />
+        {!isFullScreen && <Footer />}
       </div>
     </MuiThemeProvider>
   );
@@ -105,8 +177,6 @@ function App() {
   return (
     <ThemeProvider>
       <Router>
-        {" "}
-        {/* Move Router here to wrap AppContent */}
         <AppContent
           onLoadDashboard={onLoadDashboard}
           onCreateNewDashboard={onCreateNewDashboard}
