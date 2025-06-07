@@ -9,7 +9,7 @@ import Dashboard from "./components/Dashboard/Dashboard";
 import TerminalView from "./components/Views/TerminalView";
 import MeasurandView from "./components/Views/MeasurandView";
 import ScriptView from "./components/Views/ScriptView";
-import LogView from "./components/Views/LogView";
+import LogView from "./components/Views/LogView/LogView";
 import InjectionSchedule from "./components/Screens/InjectionSchedule";
 import ScheduleEntry from "./components/Screens/ScheduleEntry";
 import RealTimePowerBalance from "./components/Screens/RealTimePowerBalance";

@@ -15,6 +15,7 @@ import {
   useTheme,
   alpha,
   Fade,
+  Grid,
 } from "@mui/material";
 import {
   PlayArrow,
@@ -24,17 +25,20 @@ import {
   TableChart,
   Description,
   Refresh,
+  ShowChart,
 } from "@mui/icons-material";
-import { useThemeContext } from "../../context/ThemeContext";
+import { useThemeContext } from "../../../context/ThemeContext";
 import { DataGrid } from "@mui/x-data-grid";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { parseISO, isBefore, subDays } from "date-fns";
+import { parseISO, isBefore, format } from "date-fns";
 import { v4 as uuidv4 } from "uuid";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import * as XLSX from "xlsx";
+import LogGraph from "./LogGraph";
+const API_BASE_URL = process.env.REACT_APP_API_LOCAL_URL;
 
 const LogView = () => {
   const { mode } = useThemeContext();
@@ -47,39 +51,89 @@ const LogView = () => {
   const [selectedSavedQuery, setSelectedSavedQuery] = useState("");
   const [saveAnchorEl, setSaveAnchorEl] = useState(null);
   const [customQueryName, setCustomQueryName] = useState("");
+  const [queryOptions, setQueryOptions] = useState([]);
+  const [measurandNames, setMeasurandNames] = useState([]);
+  const [graphOpen, setGraphOpen] = useState(false);
+  const [selectedMeasurand, setSelectedMeasurand] = useState(null);
+  const [compareMeasurands, setCompareMeasurands] = useState([]);
 
-  const queryOptions = [
-    "Error Logs",
-    "System Logs",
-    "Access Logs",
-    "Performance Logs",
+  // Define vibrant color palette for statistics (matching LogGraph)
+  const colors = [
+    "#6366F1", // Indigo
+    "#EC4899", // Pink
+    "#22D3EE", // Cyan
+    "#F59E0B", // Amber
+    "#10B981", // Emerald
+    "#8B5CF6", // Purple
   ];
+
+  // Calculate statistics for measurands
+  const statistics = useMemo(() => {
+    if (!logs || !measurandNames || !measurandNames.length) return {};
+
+    return measurandNames.reduce((acc, measurand, index) => {
+      const values = logs
+        .map((log) => log[measurand])
+        .filter((val) => val != null && !isNaN(val));
+
+      if (values.length === 0) return acc;
+
+      const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+
+      acc[measurand] = {
+        mean: mean.toFixed(2),
+        min: min.toFixed(2),
+        max: max.toFixed(2),
+        color: colors[index % colors.length],
+      };
+      return acc;
+    }, {});
+  }, [logs, measurandNames]);
 
   // Memoize gradients for performance
   const gradients = useMemo(
     () => ({
       primary:
         mode === "light"
-          ? "linear-gradient(45deg, #1E40AF, #3B82F6)"
-          : "linear-gradient(45deg, #166534, #22C55E)",
+          ? "linear-gradient(45deg, #4F46E5, #7C3AED)"
+          : "linear-gradient(45deg, #065F46, #10B981)",
       hover:
         mode === "light"
-          ? "linear-gradient(45deg, #1E3A8A, #2563EB)"
-          : "linear-gradient(45deg, #14532D, #16A34A)",
+          ? "linear-gradient(45deg, #4338CA, #6D28D9)"
+          : "linear-gradient(45deg, #064E3B, #059669)",
       paper:
         mode === "light"
-          ? "linear-gradient(135deg, #FFFFFF, #F8FAFC)"
-          : "linear-gradient(135deg, #1F2937, #111827)",
+          ? "linear-gradient(145deg, #FFFFFF, #F3F4F6)"
+          : "linear-gradient(145deg, #1F2937, #111827)",
       container:
         mode === "light"
-          ? "linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)"
-          : "linear-gradient(135deg, #022C22 0%, #064E3B 100%)",
+          ? "linear-gradient(145deg, #EFF6FF, #DBEAFE)"
+          : "linear-gradient(145deg, #022C22, #064E3B)",
     }),
     [mode]
   );
 
-  // Load saved queries from localStorage on mount
+  // Fetch queries from API on mount
   useEffect(() => {
+    const fetchQueries = async () => {
+      try {
+        // const response = await fetch("http://localhost:8008/api/logs/queries");
+        const response = await fetch(`${API_BASE_URL}api/logs/queries`);
+        const data = await response.json();
+        if (response.ok) {
+          setQueryOptions(data.map((query) => query.QName));
+        } else {
+          console.error("Error fetching queries:", data.message);
+        }
+      } catch (error) {
+        console.error("Failed to fetch queries:", error);
+      }
+    };
+    fetchQueries();
+
+    // Load saved queries from localStorage
     try {
       const storedQueries = localStorage.getItem("savedLogQueries");
       if (storedQueries) {
@@ -90,33 +144,8 @@ const LogView = () => {
     }
   }, []);
 
-  // Sample data generation for the data grid
-  const generateMockLogs = () => {
-    const mockLogs = [];
-    const levels = ["INFO", "WARN", "ERROR", "DEBUG"];
-    const sources = ["Server", "Database", "Application", "Network"];
-    const startTime = fromDate
-      ? fromDate.getTime()
-      : subDays(new Date(), 1).getTime();
-    const endTime = toDate ? toDate.getTime() : new Date().getTime();
-
-    for (let i = 0; i < 50; i++) {
-      const timestamp = new Date(
-        startTime + Math.random() * (endTime - startTime)
-      ).toISOString();
-      mockLogs.push({
-        id: uuidv4(),
-        timestamp,
-        level: levels[Math.floor(Math.random() * levels.length)],
-        message: `Log message ${i + 1} for ${queryName || "selected query"}`,
-        source: sources[Math.floor(Math.random() * sources.length)],
-      });
-    }
-    return mockLogs;
-  };
-
   // Handle Execute button click
-  const handleExecute = () => {
+  const handleExecute = async () => {
     if (!queryName || !fromDate || !toDate) {
       alert("Please select a query name and valid date range.");
       return;
@@ -125,7 +154,52 @@ const LogView = () => {
       alert("To date must be after From date.");
       return;
     }
-    setLogs(generateMockLogs());
+
+    try {
+      const response = await fetch(
+        // "http://localhost:8008/api/logs/execute-query",
+        `${API_BASE_URL}api/logs/execute-query`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            qName: queryName,
+            fromDate: fromDate.toISOString(),
+            toDate: toDate.toISOString(),
+          }),
+        }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        // Extract unique measurand names
+        const uniqueMeasurands = [
+          ...new Set(
+            data.flatMap((log) => log.MeasurandData.map((m) => m.MeasurandName))
+          ),
+        ];
+        setMeasurandNames(uniqueMeasurands);
+
+        // Transform data for DataGrid, ensuring MeasurandValue is a number
+        const transformedLogs = data.map((log) => {
+          const row = {
+            id: uuidv4(),
+            timestamp: log.TimeStamp,
+          };
+          log.MeasurandData.forEach((m) => {
+            const value = Number(m.MeasurandValue);
+            row[m.MeasurandName] = isNaN(value)
+              ? null
+              : Number(value.toFixed(2));
+          });
+          return row;
+        });
+        setLogs(transformedLogs);
+      } else {
+        alert(`Error executing query: ${data.message}`);
+      }
+    } catch (error) {
+      alert("Failed to execute query: " + error.message);
+    }
   };
 
   // Handle Refresh button click
@@ -186,7 +260,28 @@ const LogView = () => {
       setFromDate(null);
       setToDate(null);
       setLogs([]);
+      setMeasurandNames([]);
     }
+  };
+
+  // Handle Graph icon click
+  const handleGraphClick = (measurand) => {
+    setSelectedMeasurand(measurand);
+    setCompareMeasurands([measurand]);
+    setGraphOpen(true);
+  };
+
+  // Handle Graph dialog close
+  const handleGraphClose = () => {
+    setGraphOpen(false);
+    setSelectedMeasurand(null);
+    setCompareMeasurands([]);
+  };
+
+  // Handle measurand comparison
+  const handleCompareChange = (event) => {
+    const value = event.target.value;
+    setCompareMeasurands(typeof value === "string" ? value.split(",") : value);
   };
 
   // Export to PDF
@@ -196,15 +291,15 @@ const LogView = () => {
     doc.text("Log Report", 14, 10);
     doc.autoTable({
       startY: 20,
-      head: [["Timestamp", "Level", "Message", "Source"]],
+      head: [["Timestamp", ...measurandNames]],
       body: logs.map((log) => [
-        log.timestamp,
-        log.level,
-        log.message,
-        log.source,
+        format(parseISO(log.timestamp), "HH:mm:ss"),
+        ...measurandNames.map((name) =>
+          log[name] != null ? Number(log[name]).toFixed(2) : ""
+        ),
       ]),
       theme: "striped",
-      headStyles: { fillColor: mode === "light" ? "#1E40AF" : "#166534" },
+      headStyles: { fillColor: mode === "light" ? "#4F46E5" : "#065F46" },
     });
     doc.save(`log_report_${new Date().toISOString()}.pdf`);
   };
@@ -212,7 +307,17 @@ const LogView = () => {
   // Export to Excel
   const handleExportExcel = () => {
     if (logs.length === 0) return;
-    const worksheet = XLSX.utils.json_to_sheet(logs);
+    const worksheet = XLSX.utils.json_to_sheet(
+      logs.map((log) => ({
+        Timestamp: format(parseISO(log.timestamp), "HH:mm:ss"),
+        ...Object.fromEntries(
+          measurandNames.map((name) => [
+            name,
+            log[name] != null ? Number(log[name]).toFixed(2) : "",
+          ])
+        ),
+      }))
+    );
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Logs");
     XLSX.writeFile(workbook, `log_report_${new Date().toISOString()}.xlsx`);
@@ -221,7 +326,17 @@ const LogView = () => {
   // Export to CSV
   const handleExportCSV = () => {
     if (logs.length === 0) return;
-    const worksheet = XLSX.utils.json_to_sheet(logs);
+    const worksheet = XLSX.utils.json_to_sheet(
+      logs.map((log) => ({
+        Timestamp: format(parseISO(log.timestamp), "HH:mm:ss"),
+        ...Object.fromEntries(
+          measurandNames.map((name) => [
+            name,
+            log[name] != null ? Number(log[name]).toFixed(2) : "",
+          ])
+        ),
+      }))
+    );
     const csv = XLSX.utils.sheet_to_csv(worksheet);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
@@ -230,13 +345,59 @@ const LogView = () => {
     link.click();
   };
 
-  // Data grid columns
-  const columns = [
-    { field: "timestamp", headerName: "Timestamp", width: 200, sortable: true },
-    { field: "level", headerName: "Level", width: 120 },
-    { field: "message", headerName: "Message", width: 400, flex: 1 },
-    { field: "source", headerName: "Source", width: 150 },
-  ];
+  // Data grid columns with graph icon
+  const columns = useMemo(
+    () => [
+      {
+        field: "timestamp",
+        headerName: "Timestamp",
+        width: 200,
+
+        sortable: true,
+        valueFormatter: ({ value }) => value,
+      },
+      ...measurandNames.map((name) => ({
+        field: name,
+        headerName: name,
+        width: 150,
+        valueFormatter: ({ value }) => value,
+        renderHeader: () => (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              color: theme.palette.text.primary,
+            }}
+          >
+            <Typography
+              sx={{
+                fontWeight: 500,
+                fontFamily: "'Inter', sans-serif",
+                color: theme.palette.text.primary,
+              }}
+            >
+              {name}
+            </Typography>
+            <Tooltip title={`View ${name} Graph`}>
+              <IconButton
+                size="small"
+                onClick={() => handleGraphClick(name)}
+                sx={{
+                  color: theme.palette.info.main,
+                  "&:hover": { transform: "scale(1.1)" },
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <ShowChart />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        ),
+      })),
+    ],
+    [measurandNames, theme.palette.info.main]
+  );
 
   const isSavePopoverOpen = Boolean(saveAnchorEl);
   const savePopoverId = isSavePopoverOpen ? "save-query-popover" : undefined;
@@ -251,10 +412,10 @@ const LogView = () => {
             gap: 3,
             minHeight: "80vh",
             width: "100%",
-            padding: 2,
+            padding: 3,
             background: gradients.container,
-            borderRadius: 3,
-            boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.15)}`,
+            borderRadius: 4,
+            boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.2)}`,
             transition: "all 0.3s ease",
           }}
         >
@@ -263,7 +424,10 @@ const LogView = () => {
             sx={{
               p: 3,
               background: gradients.paper,
-              boxShadow: `0 6px 24px ${alpha(theme.palette.primary.main, 0.1)}`,
+              boxShadow: `0 6px 20px ${alpha(
+                theme.palette.primary.main,
+                0.15
+              )}`,
               borderRadius: 3,
               position: "relative",
               overflow: "hidden",
@@ -277,11 +441,11 @@ const LogView = () => {
                 background: gradients.primary,
                 borderRadius: "3px 3px 0 0",
               },
-              transition: "transform 0.3s ease, box-shadow 0.3s ease",
+              transition: "all 0.3s ease",
               "&:hover": {
-                boxShadow: `0 8px 28px ${alpha(
+                boxShadow: `0 10px 28px ${alpha(
                   theme.palette.primary.main,
-                  0.2
+                  0.25
                 )}`,
               },
             }}
@@ -295,7 +459,10 @@ const LogView = () => {
               }}
             >
               <FormControl sx={{ width: 220, flexShrink: 0 }}>
-                <InputLabel id="query-name-label">
+                <InputLabel
+                  id="query-name-label"
+                  sx={{ fontWeight: 600, fontFamily: "'Inter', sans-serif" }}
+                >
                   <QueryStats
                     sx={{
                       color: theme.palette.info.main,
@@ -309,22 +476,33 @@ const LogView = () => {
                   labelId="query-name-label"
                   value={queryName}
                   onChange={(e) => setQueryName(e.target.value)}
-                  label="Query Name label"
+                  label="query-name-label"
                   sx={{
                     height: "50px",
                     borderRadius: 2,
-                    backgroundColor: mode === "light" ? "#F8FAFC" : "#1F2937",
-                    transition: "all 0.2s ease",
+                    backgroundColor: mode === "light" ? "#FFFFFF" : "#1F2937",
                     "&:hover": {
                       backgroundColor: alpha(theme.palette.primary.main, 0.1),
                     },
+                    "& .MuiSelect-select": {
+                      fontWeight: 500,
+                      fontFamily: "'Inter', sans-serif",
+                    },
+                    boxShadow: `0 4px 12px ${alpha(
+                      theme.palette.primary.main,
+                      0.1
+                    )}`,
                   }}
                 >
                   <MenuItem value="" disabled>
                     Select a query
                   </MenuItem>
                   {queryOptions.map((query) => (
-                    <MenuItem key={query} value={query}>
+                    <MenuItem
+                      key={query}
+                      value={query}
+                      sx={{ fontWeight: 500 }}
+                    >
                       {query}
                     </MenuItem>
                   ))}
@@ -345,16 +523,19 @@ const LogView = () => {
                         height: "50px",
                         borderRadius: 2,
                         backgroundColor:
-                          mode === "light" ? "#F8FAFC" : "#1F2937",
+                          mode === "light" ? "#FFFFFF" : "#1F2937",
                         "&:hover": {
                           backgroundColor: alpha(
                             theme.palette.primary.main,
                             0.1
                           ),
                         },
+                        fontFamily: "'Inter', sans-serif",
                       },
                       "& .MuiInputLabel-root": {
                         color: theme.palette.text.secondary,
+                        fontWeight: 600,
+                        fontFamily: "'Inter', sans-serif",
                         "&.Mui-focused": {
                           color: theme.palette.primary.main,
                         },
@@ -395,16 +576,19 @@ const LogView = () => {
                         height: "50px",
                         borderRadius: 2,
                         backgroundColor:
-                          mode === "light" ? "#F8FAFC" : "#1F2937",
+                          mode === "light" ? "#FFFFFF" : "#1F2937",
                         "&:hover": {
                           backgroundColor: alpha(
                             theme.palette.primary.main,
                             0.1
                           ),
                         },
+                        fontFamily: "'Inter', sans-serif",
                       },
                       "& .MuiInputLabel-root": {
                         color: theme.palette.text.secondary,
+                        fontWeight: 600,
+                        fontFamily: "'Inter', sans-serif",
                         "&.Mui-focused": {
                           color: theme.palette.primary.main,
                         },
@@ -455,6 +639,7 @@ const LogView = () => {
                   px: 3,
                   flexShrink: 0,
                   fontWeight: 600,
+                  fontFamily: "'Inter', sans-serif",
                 }}
               >
                 Execute
@@ -577,7 +762,12 @@ const LogView = () => {
               </Box>
 
               <FormControl sx={{ width: 220, flexShrink: 0 }}>
-                <InputLabel id="saved-queries-label">Saved Queries</InputLabel>
+                <InputLabel
+                  id="saved-queries-label"
+                  sx={{ fontWeight: 600, fontFamily: "'Inter', sans-serif" }}
+                >
+                  Saved Queries
+                </InputLabel>
                 <Select
                   labelId="saved-queries-label"
                   value={selectedSavedQuery}
@@ -586,18 +776,29 @@ const LogView = () => {
                   sx={{
                     height: "50px",
                     borderRadius: 2,
-                    backgroundColor: mode === "light" ? "#F8FAFC" : "#1F2937",
-                    transition: "all 0.2s ease",
+                    backgroundColor: mode === "light" ? "#FFFFFF" : "#1F2937",
                     "&:hover": {
                       backgroundColor: alpha(theme.palette.primary.main, 0.1),
                     },
+                    "& .MuiSelect-select": {
+                      fontWeight: 500,
+                      fontFamily: "'Inter', sans-serif",
+                    },
+                    boxShadow: `0 4px 12px ${alpha(
+                      theme.palette.primary.main,
+                      0.1
+                    )}`,
                   }}
                 >
                   <MenuItem value="">
                     <em>Select a saved query</em>
                   </MenuItem>
                   {savedQueries.map((query) => (
-                    <MenuItem key={query.id} value={query.id}>
+                    <MenuItem
+                      key={query.id}
+                      value={query.id}
+                      sx={{ fontWeight: 500 }}
+                    >
                       {query.name}
                     </MenuItem>
                   ))}
@@ -665,7 +866,11 @@ const LogView = () => {
               >
                 <Typography
                   variant="h6"
-                  sx={{ fontWeight: 600, color: theme.palette.text.primary }}
+                  sx={{
+                    fontWeight: 700,
+                    color: theme.palette.text.primary,
+                    fontFamily: "'Inter', sans-serif",
+                  }}
                 >
                   Save Query
                 </Typography>
@@ -681,7 +886,12 @@ const LogView = () => {
                     mt: 1,
                     "& .MuiOutlinedInput-root": {
                       borderRadius: 2,
-                      backgroundColor: mode === "light" ? "#F8FAFC" : "#1F2937",
+                      backgroundColor: mode === "light" ? "#FFFFFF" : "#1F2937",
+                      fontFamily: "'Inter', sans-serif",
+                    },
+                    "& .MuiInputLabel-root": {
+                      fontWeight: 600,
+                      fontFamily: "'Inter', sans-serif",
                     },
                   }}
                 />
@@ -701,10 +911,14 @@ const LogView = () => {
                       borderRadius: 2,
                       borderColor: theme.palette.text.secondary,
                       color: theme.palette.text.primary,
+                      fontWeight: 600,
+                      fontFamily: "'Inter', sans-serif",
                       "&:hover": {
                         borderColor: theme.palette.primary.main,
                         backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                        transform: "scale(1.05)",
                       },
+                      transition: "all 0.2s ease",
                     }}
                   >
                     Cancel
@@ -716,11 +930,18 @@ const LogView = () => {
                     sx={{
                       background: gradients.primary,
                       borderRadius: 2,
+                      fontWeight: 600,
+                      fontFamily: "'Inter', sans-serif",
                       "&:hover": {
                         background: gradients.hover,
                         transform: "translateY(-2px)",
+                        boxShadow: `0 6px 16px ${alpha(
+                          theme.palette.primary.main,
+                          0.4
+                        )}`,
                       },
                       "&:active": { transform: "translateY(0)" },
+                      transition: "all 0.2s ease",
                     }}
                   >
                     Save
@@ -731,61 +952,176 @@ const LogView = () => {
           </Paper>
 
           {logs.length > 0 && (
-            <Paper
-              elevation={4}
-              sx={{
-                padding: 2,
-                background: gradients.container,
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-                boxShadow: `0 8px 24px ${alpha(
-                  theme.palette.primary.main,
-                  0.15
-                )}`,
-                borderRadius: 3,
-                flex: 1,
-                position: "relative",
-                overflow: "auto",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  boxShadow: `0 12px 32px ${alpha(
-                    theme.palette.primary.main,
-                    0.25
-                  )}`,
-                },
-              }}
-            >
-              <DataGrid
-                rows={logs}
-                columns={columns}
-                pageSize={10}
-                rowsPerPageOptions={[10, 25, 50]}
-                autoHeight
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <Paper
+                elevation={4}
                 sx={{
-                  "& .MuiDataGrid-root": {
-                    border: "none",
-                    backgroundColor:
-                      mode === "light"
-                        ? "rgba(255, 255, 255, 0.95)"
-                        : "rgba(15, 23, 42, 0.9)",
-                  },
-                  "& .MuiDataGrid-cell": {
-                    borderBottom: `1px solid ${alpha(
-                      theme.palette.divider,
-                      0.1
+                  padding: 2,
+                  background: gradients.paper,
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                  boxShadow: `0 8px 24px ${alpha(
+                    theme.palette.primary.main,
+                    0.15
+                  )}`,
+                  borderRadius: 3,
+                  flex: 1,
+                  position: "relative",
+                  overflow: "auto",
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    boxShadow: `0 12px 32px ${alpha(
+                      theme.palette.primary.main,
+                      0.25
                     )}`,
-                  },
-                  "& .MuiDataGrid-columnHeaders": {
-                    background: gradients.paper,
-                    color: theme.palette.text.primary,
-                    fontWeight: 600,
-                  },
-                  "& .MuiDataGrid-row:hover": {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                    transform: "translateY(-2px)",
                   },
                 }}
-              />
-            </Paper>
+              >
+                <DataGrid
+                  rows={logs}
+                  columns={columns}
+                  pageSize={10}
+                  rowsPerPageOptions={[10, 25, 50]}
+                  autoHeight
+                  sx={{
+                    "& .MuiDataGrid-root": {
+                      border: "none",
+                      backgroundColor: mode === "light" ? "#FFFFFF" : "#1F2937",
+                      fontFamily: "'Inter', sans-serif",
+                    },
+                    "& .MuiDataGrid-cell": {
+                      borderBottom: `1px solid ${alpha(
+                        theme.palette.divider,
+                        0.1
+                      )}`,
+                      color: mode === "light" ? "#1F2937" : "#F3F4F6",
+                      fontWeight: 500,
+                    },
+                    "& .MuiDataGrid-columnHeaders": {
+                      background: gradients.primary,
+
+                      fontWeight: 500,
+                      fontFamily: "'Inter', sans-serif",
+                    },
+                    "& .MuiDataGrid-row:hover": {
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                      transform: "scale(1.005)",
+                      transition: "all 0.2s ease",
+                    },
+                    "& .MuiDataGrid-columnHeaderTitle": {
+                      fontWeight: 500,
+                    },
+                  }}
+                />
+              </Paper>
+
+              {Object.keys(statistics).length > 0 && (
+                <Fade in timeout={800}>
+                  <Box
+                    sx={{
+                      background: gradients.paper,
+                      borderRadius: 3,
+                      padding: 3,
+                      boxShadow: `0 6px 20px ${alpha(
+                        theme.palette.primary.main,
+                        0.2
+                      )}`,
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        boxShadow: `0 10px 28px ${alpha(
+                          theme.palette.primary.main,
+                          0.25
+                        )}`,
+                        transform: "translateY(-2px)",
+                      },
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 700,
+                        color: mode === "light" ? "#1F2937" : "#F3F4F6",
+                        mb: 2,
+                        fontFamily: "'Inter', sans-serif",
+                      }}
+                    >
+                      Measurand Statistics
+                    </Typography>
+                    <Grid container spacing={2}>
+                      {measurandNames.map((measurand, index) => (
+                        <Grid item xs={12} sm={6} md={4} key={measurand}>
+                          <Box
+                            sx={{
+                              background:
+                                statistics[measurand]?.color ||
+                                colors[index % colors.length],
+                              color: "#FFFFFF",
+                              borderRadius: 2,
+                              padding: 2,
+                              boxShadow: `0 4px 12px ${alpha(
+                                statistics[measurand]?.color ||
+                                  colors[index % colors.length],
+                                0.4
+                              )}`,
+                              transition: "all 0.3s ease",
+                              "&:hover": {
+                                transform: "scale(1.03)",
+                                boxShadow: `0 6px 16px ${alpha(
+                                  statistics[measurand]?.color ||
+                                    colors[index % colors.length],
+                                  0.5
+                                )}`,
+                              },
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle1"
+                              sx={{
+                                fontWeight: 700,
+                                mb: 1,
+                                fontFamily: "'Inter', sans-serif",
+                              }}
+                            >
+                              {measurand}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 500 }}
+                            >
+                              Avg: {statistics[measurand]?.mean || "N/A"}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 500 }}
+                            >
+                              Min: {statistics[measurand]?.min || "N/A"}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 500 }}
+                            >
+                              Max: {statistics[measurand]?.max || "N/A"}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Box>
+                </Fade>
+              )}
+            </Box>
           )}
+
+          <LogGraph
+            open={graphOpen}
+            onClose={handleGraphClose}
+            logs={logs}
+            measurandNames={measurandNames}
+            selectedMeasurand={selectedMeasurand}
+            compareMeasurands={compareMeasurands}
+            onCompareChange={handleCompareChange}
+            mode={mode}
+          />
         </Box>
       </Fade>
     </LocalizationProvider>

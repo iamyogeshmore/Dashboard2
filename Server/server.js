@@ -7,6 +7,7 @@ const errorHandler = require("./middleware/errorHandler");
 const ESPlantRoutes = require("./routes/ESPlantRoutes");
 const esPlantTerminalRoutes = require("./routes/esPlantTerminalRoutes");
 const hdNutsGraphRoutes = require("./routes/hdNutsGraphRoutes");
+const logRoutes = require("./routes/logRoutes");
 const { initializeWebSocket } = require("./websocket");
 const http = require("http");
 
@@ -53,6 +54,7 @@ app.get("/health", (req, res) => {
 app.use("/api/plants", ESPlantRoutes);
 app.use("/api/live-value", esPlantTerminalRoutes);
 app.use("/api/history", hdNutsGraphRoutes);
+app.use("/api/logs", logRoutes);
 
 // ----------------------- Handle 404 for undefined routes -----------------------
 app.use((req, res) => {

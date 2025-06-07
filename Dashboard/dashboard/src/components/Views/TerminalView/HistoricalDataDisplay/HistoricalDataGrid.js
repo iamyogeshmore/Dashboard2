@@ -332,7 +332,7 @@ const HistoricalDataGrid = ({ table: propTable, onBack, onUpdateTable }) => {
                   fontSize: "0.75rem",
                 }}
               >
-                {isPositive ? `+${difference}` : difference}
+                {isPositive ? `(+${difference})` : `(${difference})`}
               </Typography>
             )}
           </Box>
