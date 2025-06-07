@@ -1,6 +1,7 @@
 const ESBolt = require("../models/ESBolts");
 const mongoose = require("mongoose");
 
+// ----------------------- Controller to get all queries -----------------------
 const getQueries = async (req, res) => {
   try {
     const queries = await ESBolt.find(
@@ -15,6 +16,7 @@ const getQueries = async (req, res) => {
   }
 };
 
+// ----------------------- Controller to execute a query -----------------------
 const executeQuery = async (req, res) => {
   const { qName, fromDate, toDate } = req.body;
 
@@ -38,7 +40,6 @@ const executeQuery = async (req, res) => {
     let result;
 
     if (qType === 1) {
-      // Handle aggregation pipeline
       if (!qScript.startsWith("db.")) {
         return res
           .status(400)
@@ -57,10 +58,8 @@ const executeQuery = async (req, res) => {
       }
       let pipelineStr = pipelineStrMatch[1];
 
-      // Remove comments
       pipelineStr = pipelineStr.replace(/\/\/.*$/gm, "").trim();
 
-      // Parse pipeline
       let pipeline;
       try {
         pipeline = JSON.parse(pipelineStr);
@@ -92,30 +91,27 @@ const executeQuery = async (req, res) => {
         pipeline = [pipeline];
       }
 
-      // Add UTC date filter as the first stage
       const dateFilterStage = {
         $match: {
           TimeStamp: {
-            $gte: new Date(fromDate), // Interprets ISO string as UTC
-            $lte: new Date(toDate), // Interprets ISO string as UTC
+            $gte: new Date(fromDate),
+            $lte: new Date(toDate),
           },
         },
       };
       pipeline.unshift(dateFilterStage);
 
-      // Execute the aggregation pipeline
       result = await db
         .collection(collectionName)
         .aggregate(pipeline)
         .toArray();
     } else if (qType === 2) {
-      // Handle view
       const viewName = qScript;
 
       const query = {
         TimeStamp: {
-          $gte: new Date(fromDate), // Interprets ISO string as UTC
-          $lte: new Date(toDate), // Interprets ISO string as UTC
+          $gte: new Date(fromDate),
+          $lte: new Date(toDate),
         },
       };
 
@@ -130,7 +126,7 @@ const executeQuery = async (req, res) => {
       });
     }
 
-    res.json(result); // MongoDB returns UTC timestamps in ISO format
+    res.json(result);
   } catch (error) {
     console.error("Query execution error:", error);
     res.status(500).json({

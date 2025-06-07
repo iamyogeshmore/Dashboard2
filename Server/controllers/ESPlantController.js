@@ -20,7 +20,6 @@ exports.getPlants = async (req, res, next) => {
     const { type } = req.query;
     let query = {};
 
-    // Apply type filter if provided and not 'all'
     if (type && type.toLowerCase() !== "all") {
       query = { Type: type };
       logger.info(`Filtering plants by type: ${type}`);

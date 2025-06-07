@@ -2,6 +2,7 @@ const HDNutsGraph = require("../models/HDNutsGraph");
 const ESPlant = require("../models/ESPlant");
 const logger = require("../utils/logger");
 
+// ----------------------- Get last 900 records -----------------------
 exports.getLast900Records = async (req, res, next) => {
   try {
     const { terminalId, measurandId } = req.params;
@@ -74,6 +75,7 @@ exports.getLast900Records = async (req, res, next) => {
   }
 };
 
+// ----------------------- Get records by date range -----------------------
 exports.getRecordsByDateRange = async (req, res, next) => {
   try {
     const { terminalId, measurandId } = req.params;
