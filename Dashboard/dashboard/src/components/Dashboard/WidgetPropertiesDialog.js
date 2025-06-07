@@ -41,6 +41,16 @@ const fontFamilies = [
   "Courier New",
 ];
 
+const widgetTypes = [
+  "text",
+  "number",
+  "gauge",
+  "graph",
+  "datagrid",
+  "image",
+  "all",
+];
+
 const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
   const {
     register,
@@ -68,6 +78,7 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
       valueBold: widget?.data?.valueBold || false,
       valueItalic: widget?.data?.valueItalic || false,
       valueUnderline: widget?.data?.valueUnderline || false,
+      applyToWidgetType: "", // New field for widget type selection
     },
   });
 
@@ -113,6 +124,7 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
       setValue("valueBold", widget.data.valueBold || false);
       setValue("valueItalic", widget.data.valueItalic || false);
       setValue("valueUnderline", widget.data.valueUnderline || false);
+      setValue("applyToWidgetType", ""); // Reset widget type selection
     }
   }, [widget, setValue]);
 
@@ -138,7 +150,75 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
   };
 
   const onFormSubmit = (data) => {
-    onSubmit({ ...widget, data: { ...widget.data, ...data } });
+    const { applyToWidgetType, ...properties } = data;
+    let updatedWidgets = [];
+
+    if (applyToWidgetType === "all") {
+      // Apply to all widgets
+      const dashboardKeys = Object.keys(localStorage).filter((key) =>
+        key.startsWith("dashboard_")
+      );
+      dashboardKeys.forEach((dashboardKey) => {
+        const dashboardData = JSON.parse(localStorage.getItem(dashboardKey));
+        if (dashboardData.widgets) {
+          dashboardData.widgets = dashboardData.widgets.map((w) => ({
+            ...w,
+            data: { ...w.data, ...properties },
+          }));
+          localStorage.setItem(dashboardKey, JSON.stringify(dashboardData));
+          updatedWidgets.push(...dashboardData.widgets);
+        }
+      });
+    } else if (applyToWidgetType) {
+      // Apply to widgets of the selected type
+      const dashboardKeys = Object.keys(localStorage).filter((key) =>
+        key.startsWith("dashboard_")
+      );
+      dashboardKeys.forEach((dashboardKey) => {
+        const dashboardData = JSON.parse(localStorage.getItem(dashboardKey));
+        if (dashboardData.widgets) {
+          dashboardData.widgets = dashboardData.widgets.map((w) =>
+            w.type === applyToWidgetType
+              ? { ...w, data: { ...w.data, ...properties } }
+              : w
+          );
+          localStorage.setItem(dashboardKey, JSON.stringify(dashboardData));
+          updatedWidgets.push(
+            ...dashboardData.widgets.filter((w) => w.type === applyToWidgetType)
+          );
+        }
+      });
+    } else {
+      // Apply to the specific widget
+      const updatedWidget = {
+        ...widget,
+        data: { ...widget.data, ...properties },
+      };
+      onSubmit(updatedWidget);
+      // Update the specific widget in localStorage
+      const dashboardKeys = Object.keys(localStorage).filter((key) =>
+        key.startsWith("dashboard_")
+      );
+      dashboardKeys.forEach((dashboardKey) => {
+        const dashboardData = JSON.parse(localStorage.getItem(dashboardKey));
+        if (
+          dashboardData.widgets &&
+          dashboardData.widgets.some((w) => w.id === widget.id)
+        ) {
+          dashboardData.widgets = dashboardData.widgets.map((w) =>
+            w.id === widget.id ? updatedWidget : w
+          );
+          localStorage.setItem(dashboardKey, JSON.stringify(dashboardData));
+        }
+      });
+      updatedWidgets.push(updatedWidget);
+    }
+
+    // Notify parent component of all updated widgets
+    updatedWidgets.forEach((updatedWidget) => {
+      onSubmit(updatedWidget);
+    });
+
     reset();
     onClose();
   };
@@ -759,6 +839,44 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
                       </MenuItem>
                     ))}
                   </Select>
+                </FormControl>
+                <FormControl fullWidth>
+                  <InputLabel>Apply to Widget Type</InputLabel>
+                  <Controller
+                    name="applyToWidgetType"
+                    control={control}
+                    render={({ field: { onChange, value } }) => (
+                      <Select
+                        value={value || ""}
+                        onChange={onChange}
+                        label="Apply to Widget Type"
+                        sx={{
+                          borderRadius: "8px",
+                          background: (theme) =>
+                            `linear-gradient(135deg, ${theme.palette.background.paper}ee, ${theme.palette.background.default}dd)`,
+                          "&:hover": {
+                            background: (theme) =>
+                              `linear-gradient(135deg, ${theme.palette.background.paper}ff, ${theme.palette.background.default}ee)`,
+                          },
+                        }}
+                      >
+                        <MenuItem value="">
+                          <em>This Widget Only ({widget?.type})</em>
+                        </MenuItem>
+                        {widgetTypes.map((type) => (
+                          <MenuItem
+                            key={type}
+                            value={type}
+                            sx={{
+                              textTransform: "capitalize",
+                            }}
+                          >
+                            {type === "all" ? "All Widgets" : type}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    )}
+                  />
                 </FormControl>
                 <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                   <motion.div

@@ -461,36 +461,6 @@ const LogView = () => {
               </Button>
 
               <Box sx={{ display: "flex", gap: 1.5, flexShrink: 0 }}>
-                <Tooltip title="Save Query">
-                  <IconButton
-                    onClick={handleSaveIconClick}
-                    disabled={!queryName || !fromDate || !toDate}
-                    aria-label="Save Query"
-                    sx={{
-                      bgcolor: alpha(theme.palette.primary.main, 0.1),
-                      height: 50,
-                      width: 50,
-                      borderRadius: 2,
-                      "&:hover": {
-                        bgcolor: alpha(theme.palette.primary.main, 0.2),
-                        transform: "scale(1.05)",
-                      },
-                      "&:active": { transform: "scale(1)" },
-                      "&.Mui-disabled": { opacity: 0.5 },
-                      transition: "all 0.2s ease",
-                    }}
-                  >
-                    <Save
-                      sx={{
-                        color:
-                          mode === "light"
-                            ? theme.palette.primary.main
-                            : theme.palette.success.main,
-                      }}
-                    />
-                  </IconButton>
-                </Tooltip>
-
                 <Tooltip title="Export as PDF">
                   <IconButton
                     onClick={handleExportPDF}
@@ -633,6 +603,35 @@ const LogView = () => {
                   ))}
                 </Select>
               </FormControl>
+              <Tooltip title="Save Query">
+                <IconButton
+                  onClick={handleSaveIconClick}
+                  disabled={!queryName || !fromDate || !toDate}
+                  aria-label="Save Query"
+                  sx={{
+                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+                    height: 50,
+                    width: 50,
+                    borderRadius: 2,
+                    "&:hover": {
+                      bgcolor: alpha(theme.palette.primary.main, 0.2),
+                      transform: "scale(1.05)",
+                    },
+                    "&:active": { transform: "scale(1)" },
+                    "&.Mui-disabled": { opacity: 0.5 },
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  <Save
+                    sx={{
+                      color:
+                        mode === "light"
+                          ? theme.palette.primary.main
+                          : theme.palette.success.main,
+                    }}
+                  />
+                </IconButton>
+              </Tooltip>
             </Box>
 
             <Popover

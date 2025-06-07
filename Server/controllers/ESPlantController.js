@@ -5,7 +5,6 @@ const logger = require("../utils/logger");
 const sendSuccess = (res, message, data = [], extra = {}) => {
   res.status(200).json({
     message,
-    count: data.length,
     ...extra,
     data,
   });
@@ -196,6 +195,57 @@ exports.getMeasurands = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(`Error fetching measurands: ${error.message}`, {
+      stack: error.stack,
+    });
+    next(error);
+  }
+};
+
+// ----------------------- Get plants by PatronId -----------------------
+exports.getPlantsByPatronId = async (req, res, next) => {
+  try {
+    const { patronId } = req.params;
+    const { type } = req.query;
+
+    let query = { PatronId: parseInt(patronId, 10) };
+    if (type && type.toLowerCase() !== "all") {
+      query.Type = type;
+      logger.info(
+        `Filtering plants by PatronId: ${patronId} and type: ${type}`
+      );
+    }
+
+    const plants = await ESPlant.find(query).select("_id DisplayName").lean();
+
+    if (!plants.length) {
+      logger.info(
+        `No plants found for PatronId: ${patronId}${
+          type ? ` and type: ${type}` : ""
+        }`
+      );
+      return sendSuccess(
+        res,
+        `No plants available for PatronId: ${patronId}${
+          type ? ` for type: ${type}` : ""
+        }`
+      );
+    }
+
+    const formatted = plants.map(({ _id, DisplayName }) => ({
+      plantid: _id,
+      PlantName: DisplayName,
+    }));
+
+    logger.info(
+      `Fetched ${formatted.length} plants for PatronId: ${patronId}${
+        type ? ` and type: ${type}` : ""
+      }`
+    );
+    sendSuccess(res, `Fetched ${formatted.length} plants`, formatted, {
+      patronId: parseInt(patronId, 10),
+    });
+  } catch (error) {
+    logger.error(`Error fetching plants by PatronId: ${error.message}`, {
       stack: error.stack,
     });
     next(error);

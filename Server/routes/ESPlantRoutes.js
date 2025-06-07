@@ -25,6 +25,16 @@ const validateTerminalId = (req, res, next) => {
   next();
 };
 
+// ----------------------- Middleware to validate patronId parameter -----------------------
+const validatePatronId = (req, res, next) => {
+  const patronId = req.params.patronId;
+  if (!patronId || isNaN(parseInt(patronId))) {
+    logger.error(`Invalid patron ID: ${patronId}`);
+    return res.status(400).json({ message: `Invalid patron ID: ${patronId}` });
+  }
+  next();
+};
+
 // ----------------------- Middleware to validate type parameter -----------------------
 const validateType = (req, res, next) => {
   const type = req.query.type;
@@ -43,6 +53,14 @@ const validateType = (req, res, next) => {
 
 // ----------------------- Route to get all plants -----------------------
 router.get("/", validateType, ESPlantController.getPlants);
+
+// ----------------------- Route to get plants by patronId -----------------------
+router.get(
+  "/patron/:patronId",
+  validatePatronId,
+  validateType,
+  ESPlantController.getPlantsByPatronId
+);
 
 // ----------------------- Route to get terminals for a specific plant -----------------------
 router.get(

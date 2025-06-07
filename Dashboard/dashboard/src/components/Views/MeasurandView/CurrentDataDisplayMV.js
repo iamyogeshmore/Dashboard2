@@ -40,6 +40,7 @@ import "/node_modules/react-grid-layout/css/styles.css";
 import "/node_modules/react-resizable/css/styles.css";
 import { v4 as uuidv4 } from "uuid";
 import NumberWidget from "../Widget/NumberWidget";
+import GraphWidget from "../Widget/GraphWidget";
 
 const CurrentDataDisplayMV = ({ saveView, savedViews, deleteView }) => {
   const { mode } = useThemeContext();
@@ -145,15 +146,21 @@ const CurrentDataDisplayMV = ({ saveView, savedViews, deleteView }) => {
     setIsUpdating(false);
     const newWidgets = terminals.map((terminal, index) => ({
       id: `${terminal}-${measurand}-${Date.now()}-${index}`,
+      type: widgetType,
       terminal,
       measurand,
-      value: (Math.random() * 100).toFixed(2),
-      timestamp: new Date().toLocaleString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: true,
-      }),
+      data:
+        widgetType === "Number"
+          ? {
+              value: (Math.random() * 100).toFixed(2),
+              timestamp: new Date().toLocaleString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true,
+              }),
+            }
+          : [],
     }));
     setWidgets(newWidgets);
 
@@ -172,11 +179,11 @@ const CurrentDataDisplayMV = ({ saveView, savedViews, deleteView }) => {
         i: widget.id,
         x: col,
         y: row * DEFAULT_WIDGET_HEIGHT,
-        w: DEFAULT_WIDGET_WIDTH,
-        h: DEFAULT_WIDGET_HEIGHT,
+        w: widgetType === "Graph" ? 4 : DEFAULT_WIDGET_WIDTH,
+        h: widgetType === "Graph" ? 6 : DEFAULT_WIDGET_HEIGHT,
         minW: 2,
         minH: 2,
-        maxH: 5,
+        maxH: 8,
       };
     });
 
@@ -350,15 +357,21 @@ const CurrentDataDisplayMV = ({ saveView, savedViews, deleteView }) => {
 
     const newWidgets = view.terminals.map((terminal, index) => ({
       id: `${terminal}-${view.measurand}-${Date.now()}-${index}`,
+      type: view.widgetType,
       terminal,
       measurand: view.measurand,
-      value: (Math.random() * 100).toFixed(2),
-      timestamp: new Date().toLocaleString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: true,
-      }),
+      data:
+        view.widgetType === "Number"
+          ? {
+              value: (Math.random() * 100).toFixed(2),
+              timestamp: new Date().toLocaleString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true,
+              }),
+            }
+          : [],
     }));
 
     setWidgets(newWidgets);
@@ -385,11 +398,11 @@ const CurrentDataDisplayMV = ({ saveView, savedViews, deleteView }) => {
           i: widget.id,
           x: col,
           y: row * DEFAULT_WIDGET_HEIGHT,
-          w: DEFAULT_WIDGET_WIDTH,
-          h: DEFAULT_WIDGET_HEIGHT,
+          w: widgetType === "Graph" ? 4 : DEFAULT_WIDGET_WIDTH,
+          h: widgetType === "Graph" ? 6 : DEFAULT_WIDGET_HEIGHT,
           minW: 2,
           minH: 2,
-          maxH: 5,
+          maxH: 8,
         };
       });
 
@@ -502,6 +515,52 @@ const CurrentDataDisplayMV = ({ saveView, savedViews, deleteView }) => {
   const gradients = getGradients();
   const isSavePopoverOpen = Boolean(saveAnchorEl);
   const savePopoverId = isSavePopoverOpen ? "save-popover" : undefined;
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const updatedWidgets = await Promise.all(
+        widgets.map(async (widget) => {
+          const latestData = {
+            value: (Math.random() * 100).toFixed(2),
+            timestamp: new Date().toLocaleString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+              hour12: true,
+            }),
+          };
+
+          if (widget.type === "Number") {
+            return {
+              ...widget,
+              data: {
+                value: latestData.value,
+                timestamp: latestData.timestamp,
+              },
+            };
+          } else if (widget.type === "Graph") {
+            const newDataPoint = {
+              time: latestData.timestamp,
+              value: parseFloat(latestData.value),
+              isLatest: true,
+            };
+            const newData = [...(widget.data || []), newDataPoint];
+            if (newData.length > 1) {
+              newData[newData.length - 2].isLatest = false;
+            }
+            if (newData.length > 900) {
+              return { ...widget, data: newData.slice(-900) };
+            }
+            return { ...widget, data: newData };
+          }
+          return widget;
+        })
+      );
+      setWidgets(updatedWidgets);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [widgets]);
 
   return (
     <Box
@@ -1072,7 +1131,7 @@ const CurrentDataDisplayMV = ({ saveView, savedViews, deleteView }) => {
             >
               <Dashboard sx={{ fontSize: 60, opacity: 0.5, mb: 2 }} />
               <br />
-              No Dashboard Generated
+              No View Generated
             </Typography>
             <Typography
               variant="body1"
@@ -1134,14 +1193,24 @@ const CurrentDataDisplayMV = ({ saveView, savedViews, deleteView }) => {
           >
             {widgets.map((widget) => (
               <div key={widget.id}>
-                <NumberWidget
-                  terminal={widget.terminal}
-                  measurand={widget.measurand}
-                  value={widget.value}
-                  timestamp={widget.timestamp}
-                  widgetId={widget.id}
-                  onDelete={handleDeleteWidget}
-                />
+                {widget.type === "Number" ? (
+                  <NumberWidget
+                    terminal={widget.terminal}
+                    measurand={widget.measurand}
+                    value={widget.data.value}
+                    timestamp={widget.data.timestamp}
+                    widgetId={widget.id}
+                    onDelete={handleDeleteWidget}
+                  />
+                ) : (
+                  <GraphWidget
+                    terminal={widget.terminal}
+                    measurand={widget.measurand}
+                    data={widget.data}
+                    widgetId={widget.id}
+                    onDelete={handleDeleteWidget}
+                  />
+                )}
               </div>
             ))}
           </GridLayout>

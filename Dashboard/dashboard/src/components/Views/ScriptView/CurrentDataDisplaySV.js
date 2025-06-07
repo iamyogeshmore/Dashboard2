@@ -774,11 +774,9 @@ const CurrentDataDisplaySV = () => {
             </Button>
 
             <FormControl sx={{ width: selectWidth, flexShrink: 0 }}>
-              <InputLabel id="saved-dashboards-label">
-                Saved Dashboards
-              </InputLabel>
+              <InputLabel id="saved-Views-label">Saved Views</InputLabel>
               <Select
-                labelId="saved-dashboards-label"
+                labelId="saved-Views-label"
                 value={selectedViewId}
                 onChange={(e) => {
                   if (e.target.value === "new") {
@@ -792,7 +790,7 @@ const CurrentDataDisplaySV = () => {
                     }
                   }
                 }}
-                label="Saved Dashboards"
+                label="Saved Views"
                 sx={{
                   height: "40px",
                   borderRadius: 2,
@@ -1313,7 +1311,7 @@ const CurrentDataDisplaySV = () => {
                 >
                   <Dashboard sx={{ fontSize: 60, opacity: 0.5, mb: 2 }} />
                   <br />
-                  No Dashboard Generated
+                  No View Generated
                 </Typography>
                 <Typography
                   variant="body1"

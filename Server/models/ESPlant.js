@@ -9,8 +9,8 @@ const terminalSchema = new mongoose.Schema({
 const measurandSchema = new mongoose.Schema({
   MeasurandId: { type: Number, required: true },
   MeasurandName: { type: String, required: true },
-  Unit: { type: String, required: true },
   DisplayName: { type: String, required: true },
+  DisplayUnit: { type: String, required: true },
 });
 
 const plantSchema = new mongoose.Schema(
@@ -20,6 +20,7 @@ const plantSchema = new mongoose.Schema(
     Description: { type: String, required: true },
     DisplayName: { type: String, required: true },
     Type: { type: String, required: true },
+    PatronId: { type: Number, required: true },
     TerminalList: [terminalSchema],
     MeasurandList: [measurandSchema],
     QueryList: [{ type: String }],

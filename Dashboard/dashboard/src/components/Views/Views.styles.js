@@ -15,3 +15,14 @@ export const MetricCard = styled("Card")(({ theme }) => ({
       ? "linear-gradient(45deg, #bbdefb, #e3f2fd)"
       : "linear-gradient(45deg, #37474f, #263238)",
 }));
+
+export const blinking = `
+  .blinking {
+    animation: blinker 1s linear infinite;
+  }
+  @keyframes blinker {
+    50% {
+      opacity: 0;
+    }
+  }
+`;
