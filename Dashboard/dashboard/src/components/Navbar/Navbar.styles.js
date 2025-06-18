@@ -2,23 +2,20 @@ import { styled } from "@mui/material/styles";
 import { Typography, Button, IconButton } from "@mui/material";
 
 export const EnergyLabel = styled(Typography)(({ theme }) => ({
-  fontWeight: 400,
-  fontSize: "1.5rem",
+  fontWeight: 500,
+  fontSize: "1.4rem",
   display: "flex",
   alignItems: "center",
-  color: theme.palette.mode === "light" ? "#ffffff" : "#ffffff",
-  textShadow: `0 0 12px ${
-    theme.palette.mode === "light" ? "#0288d1" : "#22c55e"
-  }70`,
+  color: "#FFFFFF",
+  textShadow: `0 0 12px rgba(255, 255, 255, 0.4)`,
   position: "relative",
   cursor: "pointer",
   textDecoration: "none",
   transition: "transform 0.3s ease, text-shadow 0.3s ease",
+  letterSpacing: "0.5px",
   "&:hover": {
     transform: "scale(1.05) translateY(-1px)",
-    textShadow: `0 0 20px ${
-      theme.palette.mode === "light" ? "#0288d1" : "#22c55e"
-    }`,
+    textShadow: `0 0 20px rgba(255, 255, 255, 0.6)`,
   },
   "&:after": {
     content: '""',
@@ -27,21 +24,17 @@ export const EnergyLabel = styled(Typography)(({ theme }) => ({
     height: "3px",
     bottom: "-6px",
     left: "0",
-    background: `linear-gradient(90deg, ${
-      theme.palette.mode === "light" ? "#0288d1" : "#22c55e"
-    }, ${theme.palette.secondary.main})`,
+    background: `linear-gradient(90deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4))`,
     transition: "width 0.4s ease-in-out, box-shadow 0.3s ease",
   },
   "&:hover:after": {
     width: "100%",
-    boxShadow: `0 0 10px ${
-      theme.palette.mode === "light" ? "#0288d1" : "#22c55e"
-    }80`,
+    boxShadow: `0 0 10px rgba(255, 255, 255, 0.4)`,
   },
 }));
 
 export const AnimatedEnergiSpeak = styled(Typography)(({ theme }) => ({
-  fontWeight: 700,
+  fontWeight: 500,
   fontSize: "1.5rem",
   display: "flex",
   alignItems: "center",
@@ -49,68 +42,101 @@ export const AnimatedEnergiSpeak = styled(Typography)(({ theme }) => ({
   position: "relative",
   cursor: "pointer",
   textDecoration: "none",
-  transition: "transform 0.3s ease, filter 0.3s ease",
-  "&:hover": {
-    transform: "scale(1.08) translateY(-2px)",
-    filter: `drop-shadow(0 0 15px ${
-      theme.palette.mode === "light" ? "#1E40AF" : "#22C55E"
-    }80)`,
-  },
-  "&:active": {
-    transform: "scale(0.98)",
-  },
-  // Add a subtle glow effect
-  "&:before": {
-    content: '""',
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    width: "120%",
-    height: "120%",
-    background: `radial-gradient(ellipse, ${
-      theme.palette.mode === "light"
-        ? "rgba(30, 64, 175, 0.1)"
-        : "rgba(34, 197, 94, 0.1)"
-    } 0%, transparent 70%)`,
-    transform: "translate(-50%, -50%)",
-    borderRadius: "50%",
-    zIndex: -1,
-    opacity: 0,
-    transition: "opacity 0.3s ease",
-  },
-  "&:hover:before": {
-    opacity: 1,
-  },
 }));
 
 export const NavButton = styled(Button)(({ theme }) => ({
-  color: "#fff",
-  fontWeight: 200,
-  fontSize: "1rem",
-  padding: "8px 16px",
-  borderRadius: "20px",
+  color: "#FFFFFF",
+  fontWeight: 500,
+  fontSize: "0.95rem",
+  padding: "10px 18px",
+  borderRadius: "12px",
   textTransform: "none",
-  background: "rgba(255, 255, 255, 0.1)",
-  backdropFilter: "blur(5px)",
-  transition: "all 0.3s ease",
+  background: "rgba(255, 255, 255, 0.08)",
+  backdropFilter: "blur(12px)",
+  border: "1px solid rgba(255, 255, 255, 0.15)",
+  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+  letterSpacing: "0.5px",
   "&:hover": {
-    background: theme.palette.primary.light,
-    color: "#000",
-    transform: "scale(1.1) translateY(-2px)",
-    boxShadow: `0 0 15px ${theme.palette.primary.light}80`,
+    background: "rgba(255, 255, 255, 0.15)",
+    color: "#000000",
+    transform: "translateY(-2px)",
+    boxShadow: `0 8px 25px rgba(255, 255, 255, 0.2)`,
+    border: "1px solid rgba(255, 255, 255, 0.25)",
   },
   "&.active": {
-    background: theme.palette.primary.light,
-    color: "#000",
-    boxShadow: `0 0 10px ${theme.palette.primary.light}50`,
+    background: (theme) =>
+      theme.palette.mode === "light"
+        ? "rgba(0, 0, 0, 0.2)"
+        : "rgba(255, 255, 255, 0.25)",
+
+    boxShadow: (theme) =>
+      theme.palette.mode === "light"
+        ? "0 6px 20px rgba(0, 0, 0, 0.2)"
+        : "0 6px 20px rgba(255, 255, 255, 0.2)",
+
+    fontWeight: 600,
+    color: "#FFFF00",
+    border: "1px solid #006400",
+    transform: "translateY(-1px)",
+    "&:hover": {
+      background: (theme) =>
+        theme.palette.mode === "light"
+          ? "rgba(0, 0, 0, 0.25)"
+          : "rgba(255, 255, 255, 0.3)",
+
+      boxShadow: (theme) =>
+        theme.palette.mode === "light"
+          ? "0 8px 25px rgba(0, 0, 0, 0.25)"
+          : "0 8px 25px rgba(255, 255, 255, 0.25)",
+      transform: "translateY(-3px)",
+    },
+  },
+  "& .MuiButton-startIcon": {
+    color: "rgba(255, 255, 255, 0.9)",
+    transition: "all 0.3s ease",
+  },
+  "& .MuiButton-endIcon": {
+    color: "rgba(255, 255, 255, 0.8)",
+    transition: "all 0.3s ease",
+  },
+  "&:hover .MuiButton-startIcon": {
+    color: "#FFFFFF",
+    transform: "scale(1.1)",
+  },
+  "&:hover .MuiButton-endIcon": {
+    color: "#FFFFFF",
+    transform: "rotate(180deg)",
+  },
+  "&.active .MuiButton-startIcon": {
+    color: (theme) => (theme.palette.mode === "light" ? "#000000" : "#FFFFFF"),
+  },
+  "&.active .MuiButton-endIcon": {
+    color: (theme) => (theme.palette.mode === "light" ? "#000000" : "#FFFFFF"),
+  },
+  // Ensure the button text itself is black when active in light theme
+  "&.active .MuiButton-label": {
+    color: (theme) => (theme.palette.mode === "light" ? "#000000" : "#FFFFFF"),
+  },
+  // Additional specificity for text color
+  "&.active span": {
+    color: (theme) => (theme.palette.mode === "light" ? "#000000" : "#FFFFFF"),
+  },
+  "&.active div": {
+    color: (theme) => (theme.palette.mode === "light" ? "#000000" : "#FFFFFF"),
   },
 }));
 
 export const TimeDisplay = styled(Typography)(({ theme }) => ({
-  color: "#fff",
-  fontSize: "1rem",
-  fontWeight: 400,
+  color: "#FFFFFF",
+  fontSize: "0.9rem",
+  fontWeight: 500,
   textAlign: "center",
+  letterSpacing: "0.5px",
+  textShadow: "0 0 8px rgba(255, 255, 255, 0.3)",
+  transition: "all 0.3s ease",
+  "&:hover": {
+    textShadow: "0 0 12px rgba(255, 255, 255, 0.5)",
+  },
 }));
 
 // New styled component for the user icon button
@@ -129,7 +155,7 @@ export const UserIconButton = styled(IconButton)(({ theme }) => ({
   }`,
   boxShadow: `0 0 8px ${
     theme.palette.mode === "light"
-      ? "rgba(59, 130, 246, 0.5)"
+      ? "rgba(16, 185, 129, 0.5)"
       : "rgba(34, 197, 94, 0.5)"
   }`,
   transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -139,7 +165,7 @@ export const UserIconButton = styled(IconButton)(({ theme }) => ({
     transform: "scale(1.1) rotate(5deg)",
     boxShadow: `0 0 15px ${
       theme.palette.mode === "light"
-        ? "rgba(59, 130, 246, 0.8)"
+        ? "rgba(16, 185, 129, 0.8)"
         : "rgba(34, 197, 94, 0.8)"
     }`,
     border: `2px solid ${

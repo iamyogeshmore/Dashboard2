@@ -18,18 +18,22 @@ const TableCardMV = ({ table, onDelete, onEdit }) => {
   const navigate = useNavigate();
 
   const getGradients = () => ({
-    card:
+    primary:
       mode === "light"
-        ? "linear-gradient(135deg, rgba(255,255,255,0.95), rgba(219,234,254,0.9))"
-        : "linear-gradient(135deg, rgba(31,41,55,0.95), rgba(6,78,59,0.9))",
-    accent:
-      mode === "light"
-        ? "linear-gradient(45deg, #3B82F6, #60A5FA)"
-        : "linear-gradient(45deg, #22C55E, #34D399)",
+        ? "linear-gradient(45deg, #10B981, #34D399)"
+        : "linear-gradient(45deg, #166534, #22C55E)",
     hover:
       mode === "light"
-        ? "linear-gradient(135deg, rgba(219,234,254,0.95), rgba(191,219,254,0.9))"
-        : "linear-gradient(135deg, rgba(6,78,59,0.95), rgba(16,185,129,0.9))",
+        ? "linear-gradient(45deg, #059669, #10B981)"
+        : "linear-gradient(45deg, #14532D, #16A34A)",
+    paper:
+      mode === "light"
+        ? "linear-gradient(135deg, #FFFFFF, #F8FAFC)"
+        : "linear-gradient(135deg, #1F2937, #111827)",
+    container:
+      mode === "light"
+        ? "linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)"
+        : "linear-gradient(135deg, #022C22 0%, #064E3B 100%)",
   });
 
   const gradients = getGradients();
@@ -43,12 +47,8 @@ const TableCardMV = ({ table, onDelete, onEdit }) => {
       <Card
         onClick={handleClick}
         sx={{
-          background: gradients.card,
-          border: `1px solid ${
-            mode === "light"
-              ? "rgba(59, 130, 246, 0.3)"
-              : "rgba(34, 197, 94, 0.3)"
-          }`,
+          background: gradients.paper,
+          border: `1px solid ${gradients.container}`,
           borderRadius: 3,
           boxShadow:
             mode === "light"
@@ -73,7 +73,7 @@ const TableCardMV = ({ table, onDelete, onEdit }) => {
             left: 0,
             width: "100%",
             height: "4px",
-            background: gradients.accent,
+            background: gradients.primary,
           },
         }}
       >
@@ -94,8 +94,8 @@ const TableCardMV = ({ table, onDelete, onEdit }) => {
                   onEdit(table);
                 }}
                 sx={{
-                  color: "#00CED1",
-                  "&:hover": { background: alpha("#00CED1", 0.1) },
+                  color: gradients.primary,
+                  "&:hover": { background: alpha(gradients.primary, 0.1) },
                 }}
               >
                 <Edit sx={{ fontSize: 18 }} />
@@ -146,7 +146,7 @@ const TableCardMV = ({ table, onDelete, onEdit }) => {
               label={table.profile}
               size="small"
               sx={{
-                background: gradients.accent,
+                background: gradients.primary,
                 color: "white",
                 fontWeight: 500,
               }}
@@ -168,8 +168,8 @@ const TableCardMV = ({ table, onDelete, onEdit }) => {
                 size="small"
                 variant="outlined"
                 sx={{
-                  borderColor: mode === "light" ? "#3B82F6" : "#22C55E",
-                  color: mode === "light" ? "#3B82F6" : "#22C55E",
+                  borderColor: gradients.primary,
+                  color: gradients.primary,
                 }}
               />
             ))}
@@ -180,10 +180,7 @@ const TableCardMV = ({ table, onDelete, onEdit }) => {
             sx={{
               display: "block",
               mt: 1,
-              background:
-                mode === "light"
-                  ? "rgba(59, 130, 246, 0.1)"
-                  : "rgba(34, 197, 94, 0.1)",
+              background: gradients.container,
               px: 1,
               py: 0.5,
               borderRadius: 1,

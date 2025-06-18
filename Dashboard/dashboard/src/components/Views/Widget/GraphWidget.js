@@ -85,10 +85,10 @@ const GraphWidget = ({ terminal, measurand, data, widgetId, onDelete }) => {
   const unit = measurand.match(/\((.*?)\)/)?.[1] || "";
 
   const getColor = () => {
-    if (measurand.includes("Voltage")) return "#3B82F6";
+    if (measurand.includes("Voltage")) return "#10B981";
     if (measurand.includes("Current")) return "#F59E0B";
-    if (measurand.includes("Power")) return "#22C55E";
-    if (measurand.includes("Frequency")) return "#EC4899";
+    if (measurand.includes("Power")) return "#10B981";
+    if (measurand.includes("Frequency")) return "#10B981";
     return "#6366F1";
   };
 
@@ -98,11 +98,11 @@ const GraphWidget = ({ terminal, measurand, data, widgetId, onDelete }) => {
   const gradients = {
     primary:
       mode === "light"
-        ? "linear-gradient(45deg, #1E40AF, #3B82F6)"
+        ? "linear-gradient(45deg, #10B981, #34D399)"
         : "linear-gradient(45deg, #166534, #22C55E)",
     hover:
       mode === "light"
-        ? "linear-gradient(45deg, #1E3A8A, #2563EB)"
+        ? "linear-gradient(45deg, #059669, #10B981)"
         : "linear-gradient(45deg, #14532D, #16A34A)",
   };
 

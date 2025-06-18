@@ -34,10 +34,10 @@ const NumberWidget = ({
 
   // Determine default color based on measurand type
   const getColor = () => {
-    if (measurand.includes("Voltage")) return "#3B82F6";
+    if (measurand.includes("Voltage")) return "#10B981";
     if (measurand.includes("Current")) return "#F59E0B";
-    if (measurand.includes("Power")) return "#22C55E";
-    if (measurand.includes("Frequency")) return "#EC4899";
+    if (measurand.includes("Power")) return "#10B981";
+    if (measurand.includes("Frequency")) return "#10B981";
     return "#6366F1";
   };
 

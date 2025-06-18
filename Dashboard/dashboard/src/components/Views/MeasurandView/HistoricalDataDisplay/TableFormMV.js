@@ -128,6 +128,25 @@ const TableForm = ({
     measurand: { color: "#00bcd4", hover: "#26c6da" },
   };
 
+  const getGradients = () => ({
+    primary:
+      mode === "light"
+        ? "linear-gradient(45deg, #10B981, #34D399)"
+        : "linear-gradient(45deg, #166534, #22C55E)",
+    hover:
+      mode === "light"
+        ? "linear-gradient(45deg, #059669, #10B981)"
+        : "linear-gradient(45deg, #14532D, #16A34A)",
+    paper:
+      mode === "light"
+        ? "linear-gradient(135deg, #FFFFFF, #F8FAFC)"
+        : "linear-gradient(135deg, #1F2937, #111827)",
+    container:
+      mode === "light"
+        ? "linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)"
+        : "linear-gradient(135deg, #022C22 0%, #064E3B 100%)",
+  });
+
   const getFormControlStyles = (field) => ({
     width: "100%",
     maxWidth: 340,

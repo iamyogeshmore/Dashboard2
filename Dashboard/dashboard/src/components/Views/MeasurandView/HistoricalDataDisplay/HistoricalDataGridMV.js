@@ -254,7 +254,7 @@ const HistoricalDataGridMV = ({ table: propTable, onBack, onUpdateTable }) => {
         } else if (table?.measurand.includes("Power")) {
           if (value > 75) color = "#EF4444";
           else if (value > 50) color = "#10B981";
-          else color = "#3B82F6";
+          else color = "#10B981";
         }
         console.log(
           `Terminal: ${terminal}, Row: ${rowIndex}, Value: ${value}, PrevValue: ${prevValue}, Diff: ${diff}, IsPositive: ${isPositive}`
@@ -335,25 +335,22 @@ const HistoricalDataGridMV = ({ table: propTable, onBack, onUpdateTable }) => {
   const stats = calculateStats();
 
   const getGradients = () => ({
-    paper: mode === "light" ? "#FFFFFF" : "#1F2937",
     primary:
       mode === "light"
-        ? "linear-gradient(45deg, #1E40AF, #3B82F6)"
+        ? "linear-gradient(45deg, #10B981, #34D399)"
         : "linear-gradient(45deg, #166534, #22C55E)",
     hover:
       mode === "light"
-        ? "linear-gradient(45deg, #1E3A8A, #2563EB)"
+        ? "linear-gradient(45deg, #059669, #10B981)"
         : "linear-gradient(45deg, #14532D, #16A34A)",
-    container: mode === "light" ? "#F8FAFC" : "#111827",
-    configPanel:
+    paper:
       mode === "light"
         ? "linear-gradient(135deg, #FFFFFF, #F8FAFC)"
         : "linear-gradient(135deg, #1F2937, #111827)",
-    statCard:
+    container:
       mode === "light"
-        ? "linear-gradient(135deg, #E0F2FE, #DBEAFE)"
-        : "linear-gradient(135deg, #0F172A, #1E293B)",
-    actionButton: mode === "light" ? "#3B82F6" : "#22C55E",
+        ? "linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)"
+        : "linear-gradient(135deg, #022C22 0%, #064E3B 100%)",
   });
 
   const gradients = getGradients();

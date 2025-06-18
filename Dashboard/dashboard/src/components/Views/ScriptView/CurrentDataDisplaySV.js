@@ -96,11 +96,11 @@ const CurrentDataDisplaySV = () => {
     () => ({
       primary:
         mode === "light"
-          ? "linear-gradient(45deg, #1E40AF, #3B82F6)"
+          ? "linear-gradient(45deg, #10B981, #34D399)"
           : "linear-gradient(45deg, #166534, #22C55E)",
       hover:
         mode === "light"
-          ? "linear-gradient(45deg, #1E3A8A, #2563EB)"
+          ? "linear-gradient(45deg, #059669, #10B981)"
           : "linear-gradient(45deg, #14532D, #16A34A)",
       paper:
         mode === "light"
@@ -108,7 +108,7 @@ const CurrentDataDisplaySV = () => {
           : "linear-gradient(135deg, #1F2937, #111827)",
       container:
         mode === "light"
-          ? "linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)"
+          ? "linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)"
           : "linear-gradient(135deg, #022C22 0%, #064E3B 100%)",
     }),
     [mode]
@@ -659,8 +659,8 @@ const CurrentDataDisplaySV = () => {
                         size="small"
                         sx={{
                           borderRadius: "6px",
-                          bgcolor: mode === "light" ? "#DBEAFE" : "#064E3B",
-                          color: mode === "light" ? "#1E40AF" : "#D1FAE5",
+                          bgcolor: mode === "light" ? "#DCFCE7" : "#064E3B",
+                          color: mode === "light" ? "#10B981" : "#D1FAE5",
                           fontWeight: 500,
                         }}
                       />
@@ -672,8 +672,8 @@ const CurrentDataDisplaySV = () => {
                           size="small"
                           sx={{
                             borderRadius: "6px",
-                            bgcolor: mode === "light" ? "#DBEAFE" : "#064E3B",
-                            color: mode === "light" ? "#1E40AF" : "#D1FAE5",
+                            bgcolor: mode === "light" ? "#DCFCE7" : "#064E3B",
+                            color: mode === "light" ? "#10B981" : "#D1FAE5",
                             fontWeight: 500,
                           }}
                         />
@@ -983,17 +983,17 @@ const CurrentDataDisplaySV = () => {
             background: gradients.container,
             border: (theme) =>
               `1px solid ${
-                theme.palette.mode === "light" ? "#93C5FD" : "#4ADE80"
+                theme.palette.mode === "light" ? "#10B981" : "#4ADE80"
               }`,
             boxShadow: (theme) =>
               theme.palette.mode === "light"
-                ? "0 6px 16px rgba(30, 64, 175, 0.15)"
+                ? "0 6px 16px rgba(16, 185, 129, 0.15)"
                 : "0 6px 16px rgba(22, 101, 52, 0.2)",
             transition: "transform 0.3s ease, box-shadow 0.3s ease",
             "&:hover": {
               boxShadow: (theme) =>
                 theme.palette.mode === "light"
-                  ? "0 10px 24px rgba(30, 64, 175, 0.2)"
+                  ? "0 10px 24px rgba(16, 185, 129, 0.2)"
                   : "0 10px 24px rgba(22, 101, 52, 0.3)",
             },
             backdropFilter: "blur(8px)",
@@ -1013,10 +1013,10 @@ const CurrentDataDisplaySV = () => {
               sx={{
                 fontWeight: 500,
                 color: (theme) =>
-                  theme.palette.mode === "light" ? "#1E40AF" : "#22C55E",
+                  theme.palette.mode === "light" ? "#10B981" : "#22C55E",
                 background: (theme) =>
                   theme.palette.mode === "light"
-                    ? "linear-gradient(45deg, #DBEAFE, #F0F9FF)"
+                    ? "linear-gradient(45deg, #DCFCE7, #F0FDF4)"
                     : "linear-gradient(45deg, #064E3B, #14532D)",
                 px: 1.5,
                 py: 0.5,
@@ -1045,7 +1045,7 @@ const CurrentDataDisplaySV = () => {
                         fontWeight: 600,
                         color: (theme) =>
                           theme.palette.mode === "light"
-                            ? "#1E40AF"
+                            ? "#10B981"
                             : "#22C55E",
                       }}
                     >
@@ -1058,7 +1058,7 @@ const CurrentDataDisplaySV = () => {
                         sx={{
                           color: (theme) =>
                             theme.palette.mode === "light"
-                              ? "#1E40AF"
+                              ? "#10B981"
                               : "#22C55E",
                         }}
                       >
@@ -1098,10 +1098,10 @@ const CurrentDataDisplaySV = () => {
                 sx={{
                   fontWeight: 500,
                   color: (theme) =>
-                    theme.palette.mode === "light" ? "#1E40AF" : "#22C55E",
+                    theme.palette.mode === "light" ? "#10B981" : "#22C55E",
                   background: (theme) =>
                     theme.palette.mode === "light"
-                      ? "linear-gradient(45deg, #DBEAFE, #F0F9FF)"
+                      ? "linear-gradient(45deg, #DCFCE7, #F0FDF4)"
                       : "linear-gradient(45deg, #064E3B, #14532D)",
                   px: 1.5,
                   py: 0.5,
@@ -1128,7 +1128,7 @@ const CurrentDataDisplaySV = () => {
                 gap: 0.5,
                 background: (theme) =>
                   theme.palette.mode === "light"
-                    ? "linear-gradient(45deg, #DBEAFE, #F0F9FF)"
+                    ? "linear-gradient(45deg, #DCFCE7, #F0FDF4)"
                     : "linear-gradient(45deg, #064E3B, #14532D)",
                 px: 1.5,
                 py: 0.5,
@@ -1142,7 +1142,7 @@ const CurrentDataDisplaySV = () => {
                 sx={{
                   fontWeight: 500,
                   color: (theme) =>
-                    theme.palette.mode === "light" ? "#1E40AF" : "#22C55E",
+                    theme.palette.mode === "light" ? "#10B981" : "#22C55E",
                 }}
               >
                 <Code
@@ -1158,10 +1158,10 @@ const CurrentDataDisplaySV = () => {
               sx={{
                 fontWeight: 500,
                 color: (theme) =>
-                  theme.palette.mode === "light" ? "#1E40AF" : "#22C55E",
+                  theme.palette.mode === "light" ? "#10B981" : "#22C55E",
                 background: (theme) =>
                   theme.palette.mode === "light"
-                    ? "linear-gradient(45deg, #DBEAFE, #F0F9FF)"
+                    ? "linear-gradient(45deg, #DCFCE7, #F0FDF4)"
                     : "linear-gradient(45deg, #064E3B, #14532D)",
                 px: 1.5,
                 py: 0.5,

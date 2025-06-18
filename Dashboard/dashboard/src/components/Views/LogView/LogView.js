@@ -59,7 +59,7 @@ const LogView = () => {
 
   // Define vibrant color palette for statistics (matching LogGraph)
   const colors = [
-    "#6366F1", // Indigo
+    "#10B981", // Green
     "#EC4899", // Pink
     "#22D3EE", // Cyan
     "#F59E0B", // Amber
@@ -97,19 +97,19 @@ const LogView = () => {
     () => ({
       primary:
         mode === "light"
-          ? "linear-gradient(45deg, #4F46E5, #7C3AED)"
-          : "linear-gradient(45deg, #065F46, #10B981)",
+          ? "linear-gradient(45deg, #10B981, #34D399)"
+          : "linear-gradient(45deg, #166534, #22C55E)",
       hover:
         mode === "light"
-          ? "linear-gradient(45deg, #4338CA, #6D28D9)"
-          : "linear-gradient(45deg, #064E3B, #059669)",
+          ? "linear-gradient(45deg, #059669, #10B981)"
+          : "linear-gradient(45deg, #14532D, #16A34A)",
       paper:
         mode === "light"
           ? "linear-gradient(145deg, #FFFFFF, #F3F4F6)"
           : "linear-gradient(145deg, #1F2937, #111827)",
       container:
         mode === "light"
-          ? "linear-gradient(145deg, #EFF6FF, #DBEAFE)"
+          ? "linear-gradient(145deg, #F0FDF4, #DCFCE7)"
           : "linear-gradient(145deg, #022C22, #064E3B)",
     }),
     [mode]
@@ -299,7 +299,7 @@ const LogView = () => {
         ),
       ]),
       theme: "striped",
-      headStyles: { fillColor: mode === "light" ? "#4F46E5" : "#065F46" },
+      headStyles: { fillColor: mode === "light" ? "#10B981" : "#166534" },
     });
     doc.save(`log_report_${new Date().toISOString()}.pdf`);
   };

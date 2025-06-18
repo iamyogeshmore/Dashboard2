@@ -5,19 +5,19 @@ export const getTheme = (mode) =>
     palette: {
       mode,
       primary: {
-        main: mode === "light" ? "#1E40AF" : "#22C55E",
-        light: mode === "light" ? "#3B82F6" : "#4ADE80",
-        dark: mode === "light" ? "#1E3A8A" : "#166534",
+        main: mode === "light" ? "#10B981" : "#166534",
+        light: mode === "light" ? "#34D399" : "#22C55E",
+        dark: mode === "light" ? "#047857" : "#14532D",
         contrastText: "#FFFFFF",
       },
       secondary: {
-        main: mode === "light" ? "#2563EB" : "#10B981",
-        light: mode === "light" ? "#60A5FA" : "#34D399",
-        dark: mode === "light" ? "#1E40AF" : "#047857",
+        main: mode === "light" ? "#059669" : "#15803D",
+        light: mode === "light" ? "#6EE7B7" : "#4ADE80",
+        dark: mode === "light" ? "#065F46" : "#064E3B",
         contrastText: "#FFFFFF",
       },
       background: {
-        default: mode === "light" ? "#EFF6FF" : "#022C22",
+        default: mode === "light" ? "#F0FDF4" : "#022C22",
         paper: mode === "light" ? "#FFFFFF" : "#1F2937",
       },
       text: {
@@ -25,7 +25,7 @@ export const getTheme = (mode) =>
         secondary: mode === "light" ? "#475569" : "#D1D5DB",
       },
       energy: {
-        blue: mode === "light" ? "#3B82F6" : "#6EE7B7",
+        blue: mode === "light" ? "#10B981" : "#22C55E",
         green: mode === "light" ? "#10B981" : "#22C55E",
         yellow: mode === "light" ? "#F59E0B" : "#FBBF24",
         red: mode === "light" ? "#EF4444" : "#F87171",
@@ -48,23 +48,23 @@ export const getTheme = (mode) =>
         styleOverrides: {
           body: {
             scrollbarColor:
-              mode === "light" ? "#BFDBFE transparent" : "#86EFAC transparent",
+              mode === "light" ? "#86EFAC transparent" : "#86EFAC transparent",
             "&::-webkit-scrollbar, & *::-webkit-scrollbar": {
               width: "8px",
               height: "8px",
             },
             "&::-webkit-scrollbar-thumb, & *::-webkit-scrollbar-thumb": {
               borderRadius: 8,
-              backgroundColor: mode === "light" ? "#BFDBFE" : "#86EFAC",
+              backgroundColor: mode === "light" ? "#86EFAC" : "#86EFAC",
               border: "2px solid transparent",
             },
             "&::-webkit-scrollbar-thumb:focus, & *::-webkit-scrollbar-thumb:focus":
               {
-                backgroundColor: mode === "light" ? "#93C5FD" : "#4ADE80",
+                backgroundColor: mode === "light" ? "#4ADE80" : "#4ADE80",
               },
             "&::-webkit-scrollbar-thumb:hover, & *::-webkit-scrollbar-thumb:hover":
               {
-                backgroundColor: mode === "light" ? "#93C5FD" : "#4ADE80",
+                backgroundColor: mode === "light" ? "#4ADE80" : "#4ADE80",
               },
           },
         },
@@ -74,12 +74,12 @@ export const getTheme = (mode) =>
           root: {
             backgroundImage:
               mode === "light"
-                ? "linear-gradient(90deg, #1E40AF, #3B82F6)"
+                ? "linear-gradient(90deg, #10B981, #34D399)"
                 : "linear-gradient(90deg, #166534, #22C55E)",
             boxShadow: "0 4px 16px rgba(0, 0, 0, 0.15)",
             backdropFilter: "blur(10px)",
             borderBottom: `1px solid ${
-              mode === "light" ? "#3B82F6" : "#4ADE80"
+              mode === "light" ? "#34D399" : "#4ADE80"
             }`,
           },
         },
@@ -89,23 +89,23 @@ export const getTheme = (mode) =>
           root: {
             backgroundImage:
               mode === "light"
-                ? "linear-gradient(135deg, rgba(255,255,255,0.95), rgba(219,234,254,0.9))"
+                ? "linear-gradient(135deg, rgba(255,255,255,0.95), rgba(240,253,244,0.9))"
                 : "linear-gradient(135deg, rgba(31,41,55,0.95), rgba(6,78,59,0.9))",
             backdropFilter: "blur(12px)",
             boxShadow:
               mode === "light"
-                ? "0 8px 24px rgba(30, 64, 175, 0.1)"
+                ? "0 8px 24px rgba(16, 185, 129, 0.1)"
                 : "0 8px 24px rgba(22, 101, 52, 0.2)",
             border: `1px solid ${
               mode === "light"
-                ? "rgba(59, 130, 246, 0.3)"
+                ? "rgba(52, 211, 153, 0.3)"
                 : "rgba(34, 197, 94, 0.3)"
             }`,
             transition: "transform 0.3s ease, box-shadow 0.3s ease",
             "&:hover": {
               boxShadow:
                 mode === "light"
-                  ? "0 12px 32px rgba(30, 64, 175, 0.15)"
+                  ? "0 12px 32px rgba(16, 185, 129, 0.15)"
                   : "0 12px 32px rgba(22, 101, 52, 0.25)",
             },
           },
@@ -123,7 +123,7 @@ export const getTheme = (mode) =>
               transform: "translateY(-2px)",
               boxShadow: `0 4px 12px ${
                 mode === "light"
-                  ? "rgba(30, 64, 175, 0.2)"
+                  ? "rgba(16, 185, 129, 0.2)"
                   : "rgba(22, 101, 52, 0.3)"
               }`,
             },
@@ -132,25 +132,25 @@ export const getTheme = (mode) =>
           containedPrimary: {
             background:
               mode === "light"
-                ? "linear-gradient(45deg, #1E40AF, #3B82F6)"
+                ? "linear-gradient(45deg, #10B981, #34D399)"
                 : "linear-gradient(45deg, #166534, #22C55E)",
             "&:hover": {
               background:
                 mode === "light"
-                  ? "linear-gradient(45deg, #1E3A8A, #2563EB)"
+                  ? "linear-gradient(45deg, #059669, #10B981)"
                   : "linear-gradient(45deg, #14532D, #16A34A)",
             },
           },
           containedSecondary: {
             background:
               mode === "light"
-                ? "linear-gradient(45deg, #2563EB, #60A5FA)"
-                : "linear-gradient(45deg, #047857, #34D399)",
+                ? "linear-gradient(45deg, #059669, #6EE7B7)"
+                : "linear-gradient(45deg, #15803D, #4ADE80)",
             "&:hover": {
               background:
                 mode === "light"
-                  ? "linear-gradient(45deg, #1E40AF, #3B82F6)"
-                  : "linear-gradient(45deg, #065F46, #10B981)",
+                  ? "linear-gradient(45deg, #047857, #10B981)"
+                  : "linear-gradient(45deg, #064E3B, #22C55E)",
             },
           },
         },
@@ -163,7 +163,7 @@ export const getTheme = (mode) =>
             "&:hover": {
               backgroundColor:
                 mode === "light"
-                  ? "rgba(59, 130, 246, 0.1)"
+                  ? "rgba(52, 211, 153, 0.1)"
                   : "rgba(34, 197, 94, 0.1)",
               transform: "translateX(4px)",
             },
@@ -175,7 +175,7 @@ export const getTheme = (mode) =>
           tooltip: {
             backgroundColor:
               mode === "light"
-                ? "rgba(30, 64, 175, 0.9)"
+                ? "rgba(16, 185, 129, 0.9)"
                 : "rgba(22, 101, 52, 0.9)",
             color: "#FFFFFF",
             fontSize: "0.8rem",
@@ -183,7 +183,7 @@ export const getTheme = (mode) =>
             backdropFilter: "blur(6px)",
             border: `1px solid ${
               mode === "light"
-                ? "rgba(59, 130, 246, 0.3)"
+                ? "rgba(52, 211, 153, 0.3)"
                 : "rgba(34, 197, 94, 0.3)"
             }`,
           },

@@ -245,7 +245,7 @@ const HistoricalDataGrid = ({ table: propTable, onBack, onUpdateTable }) => {
             <DateRange
               sx={{
                 mr: 1,
-                color: mode === "light" ? "#3B82F6" : "#22C55E",
+                color: mode === "light" ? "#10B981" : "#22C55E",
                 fontSize: 18,
               }}
             />
@@ -276,8 +276,8 @@ const HistoricalDataGrid = ({ table: propTable, onBack, onUpdateTable }) => {
               size="small"
               onClick={() => handleOpenGraphDialog(measurand)}
               sx={{
-                color: mode === "light" ? "#3B82F6" : "#22C55E",
-                "&:hover": { color: mode === "light" ? "#2563EB" : "#16A34A" },
+                color: mode === "light" ? "#10B981" : "#22C55E",
+                "&:hover": { color: mode === "light" ? "#059669" : "#16A34A" },
               }}
             >
               <BarChart fontSize="small" />
@@ -307,7 +307,7 @@ const HistoricalDataGrid = ({ table: propTable, onBack, onUpdateTable }) => {
         } else if (measurand.includes("Power")) {
           if (value > 75) color = "#EF4444";
           else if (value > 50) color = "#10B981";
-          else color = "#3B82F6";
+          else color = "#10B981";
         }
 
         return (
@@ -382,25 +382,22 @@ const HistoricalDataGrid = ({ table: propTable, onBack, onUpdateTable }) => {
   const stats = calculateStats();
 
   const getGradients = () => ({
-    paper: mode === "light" ? "#FFFFFF" : "#1F2937",
     primary:
       mode === "light"
-        ? "linear-gradient(45deg, #1E40AF, #3B82F6)"
+        ? "linear-gradient(45deg, #10B981, #34D399)"
         : "linear-gradient(45deg, #166534, #22C55E)",
     hover:
       mode === "light"
-        ? "linear-gradient(45deg, #1E3A8A, #2563EB)"
+        ? "linear-gradient(45deg, #059669, #10B981)"
         : "linear-gradient(45deg, #14532D, #16A34A)",
-    container: mode === "light" ? "#F8FAFC" : "#111827",
-    configPanel:
+    paper:
       mode === "light"
         ? "linear-gradient(135deg, #FFFFFF, #F8FAFC)"
         : "linear-gradient(135deg, #1F2937, #111827)",
-    statCard:
+    container:
       mode === "light"
-        ? "linear-gradient(135deg, #E0F2FE, #DBEAFE)"
-        : "linear-gradient(135deg, #0F172A, #1E293B)",
-    actionButton: mode === "light" ? "#3B82F6" : "#22C55E",
+        ? "linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)"
+        : "linear-gradient(135deg, #022C22 0%, #064E3B 100%)",
   });
 
   const gradients = getGradients();
@@ -502,7 +499,7 @@ const HistoricalDataGrid = ({ table: propTable, onBack, onUpdateTable }) => {
         sx={{
           width: 300,
           p: 3,
-          background: gradients.configPanel,
+          background: gradients.container,
           borderRadius: 3,
           boxShadow:
             mode === "light"
@@ -717,8 +714,8 @@ const HistoricalDataGrid = ({ table: propTable, onBack, onUpdateTable }) => {
             <IconButton
               onClick={() => handleOpenGraphDialog(null)}
               sx={{
-                color: mode === "light" ? "#3B82F6" : "#22C55E",
-                "&:hover": { color: mode === "light" ? "#2563EB" : "#16A34A" },
+                color: mode === "light" ? "#10B981" : "#22C55E",
+                "&:hover": { color: mode === "light" ? "#059669" : "#16A34A" },
               }}
             >
               <Typography
@@ -1116,7 +1113,7 @@ const HistoricalDataGrid = ({ table: propTable, onBack, onUpdateTable }) => {
                   key={stat.measurand}
                   sx={{
                     borderRadius: 3,
-                    background: gradients.statCard,
+                    background: gradients.container,
                     boxShadow:
                       mode === "light"
                         ? "0 8px 16px rgba(30, 64, 175, 0.1)"

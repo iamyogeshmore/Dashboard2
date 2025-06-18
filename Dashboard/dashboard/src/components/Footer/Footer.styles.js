@@ -9,13 +9,13 @@ export const FooterContainer = styled(Box)(({ theme }) => ({
   minHeight: "48px",
   background:
     theme.palette.mode === "light"
-      ? "rgba(59, 130, 246, 0.1)"
+      ? "rgba(16, 185, 129, 0.1)"
       : "rgba(34, 197, 94, 0.1)",
   backdropFilter: "blur(10px)",
   borderTop: `1px solid ${theme.palette.primary.light}`,
   boxShadow: `0 -2px 8px ${
     theme.palette.mode === "light"
-      ? "rgba(30, 64, 175, 0.1)"
+      ? "rgba(16, 185, 129, 0.1)"
       : "rgba(22, 101, 52, 0.15)"
   }`,
   transition: "all 0.3s ease",

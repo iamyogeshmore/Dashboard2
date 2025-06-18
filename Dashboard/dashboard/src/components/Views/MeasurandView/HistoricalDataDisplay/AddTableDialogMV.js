@@ -154,10 +154,24 @@ const AddTableDialog = ({
   };
 
   // Enhanced gradient colors
-  const getPrimaryColor = () =>
-    mode === "light" ? theme.palette.primary.main : theme.palette.success.main;
-  const getSecondaryColor = () =>
-    mode === "light" ? theme.palette.primary.dark : theme.palette.success.dark;
+  const getGradients = () => ({
+    primary:
+      mode === "light"
+        ? "linear-gradient(45deg, #10B981, #34D399)"
+        : "linear-gradient(45deg, #166534, #22C55E)",
+    hover:
+      mode === "light"
+        ? "linear-gradient(45deg, #059669, #10B981)"
+        : "linear-gradient(45deg, #14532D, #16A34A)",
+    paper:
+      mode === "light"
+        ? "linear-gradient(135deg, #FFFFFF, #F8FAFC)"
+        : "linear-gradient(135deg, #1F2937, #111827)",
+    container:
+      mode === "light"
+        ? "linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)"
+        : "linear-gradient(135deg, #022C22 0%, #064E3B 100%)",
+  });
 
   const dialogBgColor =
     mode === "light" ? "#ffffff" : theme.palette.background.paper;
@@ -188,7 +202,7 @@ const AddTableDialog = ({
         {/* Enhanced Header with animated gradient */}
         <Box
           sx={{
-            background: `linear-gradient(135deg, ${getPrimaryColor()} 0%, ${getSecondaryColor()} 100%)`,
+            background: getGradients().primary,
             padding: 3,
             display: "flex",
             alignItems: "center",
@@ -203,9 +217,9 @@ const AddTableDialog = ({
               right: 0,
               bottom: 0,
               background: `radial-gradient(circle at 30% 50%, ${alpha(
-                getPrimaryColor(),
+                getGradients().primary,
                 0
-              )} 0%, ${alpha(getSecondaryColor(), 0.4)} 100%)`,
+              )} 0%, ${alpha(getGradients().primary, 0.4)} 100%)`,
               animation: "pulseGradient 8s ease infinite",
               zIndex: 0,
             },
@@ -428,10 +442,10 @@ const AddTableDialog = ({
                 disabled={!isValid || isSubmitting}
                 startIcon={isSubmitting ? null : <AddIcon />}
                 sx={{
-                  background: `linear-gradient(135deg, ${getPrimaryColor()} 0%, ${getSecondaryColor()} 100%)`,
+                  background: getGradients().primary,
                   "&:hover": {
-                    background: `linear-gradient(135deg, ${getSecondaryColor()} 0%, ${getPrimaryColor()} 100%)`,
-                    boxShadow: `0 8px 20px ${alpha(getPrimaryColor(), 0.5)}`,
+                    background: getGradients().hover,
+                    boxShadow: `0 8px 20px ${alpha(getGradients().primary, 0.5)}`,
                     transform: "translateY(-2px)",
                   },
                   "&.Mui-disabled": {

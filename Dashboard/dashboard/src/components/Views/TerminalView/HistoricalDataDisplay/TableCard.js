@@ -18,15 +18,15 @@ const TableCard = ({ table, onDelete }) => {
   const getGradients = () => ({
     card:
       mode === "light"
-        ? "linear-gradient(135deg, rgba(255,255,255,0.95), rgba(219,234,254,0.9))"
+        ? "linear-gradient(135deg, rgba(255,255,255,0.95), rgba(220,252,231,0.9))"
         : "linear-gradient(135deg, rgba(31,41,55,0.95), rgba(6,78,59,0.9))",
     accent:
       mode === "light"
-        ? "linear-gradient(45deg, #3B82F6, #60A5FA)"
+        ? "linear-gradient(45deg, #10B981, #34D399)"
         : "linear-gradient(45deg, #22C55E, #34D399)",
     hover:
       mode === "light"
-        ? "linear-gradient(135deg, rgba(219,234,254,0.95), rgba(191,219,254,0.9))"
+        ? "linear-gradient(135deg, rgba(220,252,231,0.95), rgba(187,247,208,0.9))"
         : "linear-gradient(135deg, rgba(6,78,59,0.95), rgba(16,185,129,0.9))",
   });
 
@@ -44,13 +44,13 @@ const TableCard = ({ table, onDelete }) => {
           background: gradients.card,
           border: `1px solid ${
             mode === "light"
-              ? "rgba(59, 130, 246, 0.3)"
+              ? "rgba(16, 185, 129, 0.3)"
               : "rgba(34, 197, 94, 0.3)"
           }`,
           borderRadius: 3,
           boxShadow:
             mode === "light"
-              ? "0 8px 24px rgba(30, 64, 175, 0.15)"
+              ? "0 8px 24px rgba(16, 185, 129, 0.15)"
               : "0 8px 24px rgba(22, 101, 52, 0.2)",
           cursor: "pointer",
           overflow: "hidden",
@@ -60,7 +60,7 @@ const TableCard = ({ table, onDelete }) => {
             background: gradients.hover,
             boxShadow:
               mode === "light"
-                ? "0 12px 32px rgba(30, 64, 175, 0.25)"
+                ? "0 12px 32px rgba(16, 185, 129, 0.25)"
                 : "0 12px 32px rgba(22, 101, 52, 0.3)",
             transform: "translateY(-4px)",
           },
@@ -145,8 +145,8 @@ const TableCard = ({ table, onDelete }) => {
                 size="small"
                 variant="outlined"
                 sx={{
-                  borderColor: mode === "light" ? "#3B82F6" : "#22C55E",
-                  color: mode === "light" ? "#3B82F6" : "#22C55E",
+                  borderColor: mode === "light" ? "#10B981" : "#22C55E",
+                  color: mode === "light" ? "#10B981" : "#22C55E",
                 }}
               />
             ))}
@@ -159,7 +159,7 @@ const TableCard = ({ table, onDelete }) => {
               mt: 1,
               background:
                 mode === "light"
-                  ? "rgba(59, 130, 246, 0.1)"
+                  ? "rgba(16, 185, 129, 0.1)"
                   : "rgba(34, 197, 94, 0.1)",
               px: 1,
               py: 0.5,

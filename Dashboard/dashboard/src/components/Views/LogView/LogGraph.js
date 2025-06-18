@@ -54,7 +54,7 @@ const LogGraph = ({
 
   // Define vibrant color palette for datasets
   const colors = [
-    "#6366F1", // Indigo
+    "#10B981", // Green
     "#EC4899", // Pink
     "#22D3EE", // Cyan
     "#F59E0B", // Amber
@@ -233,8 +233,8 @@ const LogGraph = ({
         sx={{
           background:
             themeMode === "light"
-              ? "linear-gradient(45deg, #4F46E5, #7C3AED)"
-              : "linear-gradient(45deg, #065F46, #10B981)",
+              ? "linear-gradient(45deg, #10B981, #34D399)"
+              : "linear-gradient(45deg, #166534, #22C55E)",
           color: "#FFFFFF",
           fontWeight: 700,
           fontFamily: "'Inter', sans-serif",
@@ -462,8 +462,8 @@ const LogGraph = ({
             sx={{
               background:
                 themeMode === "light"
-                  ? "linear-gradient(45deg, #4F46E5, #7C3AED)"
-                  : "linear-gradient(45deg, #065F46, #10B981)",
+                  ? "linear-gradient(45deg, #10B981, #34D399)"
+                  : "linear-gradient(45deg, #166534, #22C55E)",
               borderRadius: 2,
               fontWeight: 600,
               padding: "8px 16px",
@@ -471,8 +471,8 @@ const LogGraph = ({
               "&:hover": {
                 background:
                   themeMode === "light"
-                    ? "linear-gradient(45deg, #4338CA, #6D28D9)"
-                    : "linear-gradient(45deg, #064E3B, #059669)",
+                    ? "linear-gradient(45deg, #059669, #10B981)"
+                    : "linear-gradient(45deg, #14532D, #16A34A)",
                 transform: "translateY(-2px)",
                 boxShadow: `0 6px 16px ${alpha(
                   theme.palette.primary.main,

@@ -8,7 +8,7 @@ const ScriptView = () => {
   const getContainerGradients = () => ({
     background:
       mode === "light"
-        ? "linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)"
+        ? "linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)"
         : "linear-gradient(135deg, #022C22 0%, #064E3B 100%)",
   });
 

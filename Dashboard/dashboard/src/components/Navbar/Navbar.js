@@ -38,93 +38,61 @@ import {
 
 // Animated EnergiSpeak Component
 const EnergispeakAnimated = () => {
-  const [sparkPosition, setSparkPosition] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSparkPosition((prev) => (prev < 100 ? prev + 5 : 0));
-    }, 150);
-
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <AnimatedEnergiSpeak component={Link} to="/">
-      <Box
-        sx={{
-          position: "relative",
-          overflow: "hidden",
-          display: "inline-block",
-          px: 2,
-          py: 1,
-        }}
-      >
+      <Box>
         {/* Main text with gradient */}
-        <Box
-          component="span"
-          sx={{
-            fontSize: "1.5rem",
-            fontWeight: 700,
-            position: "relative",
-            zIndex: 10,
-            background: (theme) =>
-              theme.palette.mode === "light"
-                ? "linear-gradient(45deg,rgb(30, 64, 175),rgb(30, 64, 175))"
-                : "linear-gradient(45deg,rgb(14, 101, 46),rgb(14, 101, 46))",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            textShadow: (theme) =>
-              theme.palette.mode === "light"
-                ? "0 0 10px rgba(30, 64, 175, 0.7)"
-                : "0 0 10px rgba(34, 197, 94, 0.7)",
-          }}
-        >
+        <Box component="span">
           Energi
           <Box
             component="span"
             sx={{
               color: "#FFFFFF",
-              textShadow: (theme) =>
-                theme.palette.mode === "light"
-                  ? "0 0 8px rgba(59, 130, 246, 0.5)"
-                  : "0 0 8px rgba(74, 222, 128, 0.5)",
             }}
           >
             Speak
           </Box>
         </Box>
 
-        {/* Moving electricity spark */}
+      
+
+        {/* Floating energy particles (static) */}
         <Box
           sx={{
             position: "absolute",
-            top: 0,
-            height: "100%",
-            width: "2px",
-            opacity: 0.8,
-            filter: "blur(1px)",
-            left: `${sparkPosition}%`,
+            top: "20%",
+            right: "10%",
+            width: "4px",
+            height: "4px",
+            background: "#10B981",
+            borderRadius: "50%",
+            opacity: 0.6,
+            boxShadow: "0 0 6px #10B981",
+            transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+            "&:hover": {
+              opacity: 1,
+              transform: "scale(1.5)",
+              boxShadow: "0 0 10px #10B981",
+            },
           }}
         />
-
-        {/* Horizontal energy line */}
         <Box
           sx={{
             position: "absolute",
-            bottom: 0,
-            left: 0,
-            height: "2px",
-            width: `${sparkPosition}%`,
-            background: (theme) =>
-              theme.palette.mode === "light"
-                ? "linear-gradient(to right, transparent,rgb(3, 23, 91), #3B82F6)"
-                : "linear-gradient(to right, transparent,rgb(3, 85, 44), #4ADE80)",
-            boxShadow: (theme) =>
-              theme.palette.mode === "light"
-                ? "0 0 10px #1E40AF"
-                : "0 0 10px #22C55E",
-            transition: "width 0.15s ease-out",
+            top: "60%",
+            left: "15%",
+            width: "3px",
+            height: "3px",
+            background: "#34D399",
+            borderRadius: "50%",
+            opacity: 0.5,
+            boxShadow: "0 0 5px #34D399",
+            transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+            "&:hover": {
+              opacity: 1,
+              transform: "scale(1.3)",
+              boxShadow: "0 0 8px #34D399",
+            },
           }}
         />
       </Box>
@@ -474,11 +442,11 @@ const Navbar = ({
                 <Avatar
                   sx={{
                     bgcolor: "transparent",
-                    color: "inherit",
+                    color: "#FFFFFF",
                     transition: "all 0.3s ease",
                   }}
                 >
-                  <AccountCircle sx={{ fontSize: 28 }} />
+                  <AccountCircle sx={{ fontSize: 28, color: "#FFFFFF" }} />
                 </Avatar>
               </Badge>
             </UserIconButton>
@@ -503,49 +471,91 @@ const Navbar = ({
                 mt: 1,
                 backgroundImage: (theme) =>
                   theme.palette.mode === "light"
-                    ? "linear-gradient(135deg, #FFFFFF, #F8FAFC)"
-                    : "linear-gradient(135deg, #1F2937, #111827)",
+                    ? "linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95))"
+                    : "linear-gradient(135deg, rgba(31, 41, 55, 0.95), rgba(6, 78, 59, 0.95))",
+                backdropFilter: "blur(20px)",
                 color: (theme) =>
-                  theme.palette.mode === "light" ? "#1E293B" : "#F3F4F6",
+                  theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
                 border: (theme) =>
-                  `1px solid ${
-                    theme.palette.mode === "light"
-                      ? "rgba(59, 130, 246, 0.2)"
-                      : "rgba(34, 197, 94, 0.2)"
-                  }`,
+                  theme.palette.mode === "light"
+                    ? "1px solid rgba(0, 0, 0, 0.2)"
+                    : "1px solid rgba(255, 255, 255, 0.2)",
                 borderRadius: 2,
                 boxShadow: (theme) =>
                   theme.palette.mode === "light"
-                    ? "0 8px 32px rgba(59, 130, 246, 0.15)"
-                    : "0 8px 32px rgba(34, 197, 94, 0.15)",
+                    ? "0 20px 40px rgba(0, 0, 0, 0.15)"
+                    : "0 20px 40px rgba(0, 0, 0, 0.3)",
                 "& .MuiMenuItem-root": {
                   borderRadius: 1,
                   margin: "4px 8px",
-                  transition: "all 0.2s ease",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  color: (theme) =>
+                    theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
+                  fontWeight: 500,
                   "&:hover": {
                     backgroundColor: (theme) =>
                       theme.palette.mode === "light"
-                        ? "rgba(59, 130, 246, 0.1)"
-                        : "rgba(34, 197, 94, 0.1)",
-                    transform: "translateX(4px)",
+                        ? "rgba(0, 0, 0, 0.08)"
+                        : "rgba(255, 255, 255, 0.15)",
+                    color: (theme) =>
+                      theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
+                    transform: "translateX(8px)",
+                    boxShadow: (theme) =>
+                      theme.palette.mode === "light"
+                        ? "0 4px 12px rgba(0, 0, 0, 0.1)"
+                        : "0 4px 12px rgba(255, 255, 255, 0.1)",
                   },
                 },
               },
             }}
           >
-            <Box sx={{ px: 2, py: 1, borderBottom: 1, borderColor: "divider" }}>
+            <Box
+              sx={{
+                px: 2,
+                py: 1,
+                borderBottom: 1,
+                borderColor: (theme) =>
+                  theme.palette.mode === "light"
+                    ? "rgba(0, 0, 0, 0.2)"
+                    : "rgba(255, 255, 255, 0.2)",
+              }}
+            >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Avatar sx={{ width: 32, height: 32 }}>
-                  <Person />
+                <Avatar
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    bgcolor: (theme) =>
+                      theme.palette.mode === "light"
+                        ? "rgba(0, 0, 0, 0.2)"
+                        : "rgba(255, 255, 255, 0.2)",
+                  }}
+                >
+                  <Person
+                    sx={{
+                      color: (theme) =>
+                        theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
+                    }}
+                  />
                 </Avatar>
                 <Box>
-                  <Box sx={{ fontWeight: 600, fontSize: "0.9rem" }}>
+                  <Box
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: "0.9rem",
+                      color: (theme) =>
+                        theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
+                    }}
+                  >
                     John Doe
                   </Box>
                   <Box
                     sx={{
                       fontSize: "0.75rem",
-                      color: "text.secondary",
+                      color: (theme) =>
+                        theme.palette.mode === "light"
+                          ? "rgba(0, 0, 0, 0.7)"
+                          : "rgba(255, 255, 255, 0.7)",
                       opacity: 0.8,
                     }}
                   >
@@ -556,42 +566,102 @@ const Navbar = ({
             </Box>
             <MenuItem onClick={() => handleUserAction("profile")}>
               <ListItemIcon>
-                <Person fontSize="small" />
+                <Person
+                  fontSize="small"
+                  sx={{
+                    color: (theme) =>
+                      theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
+                  }}
+                />
               </ListItemIcon>
-              <ListItemText>Profile</ListItemText>
+              <ListItemText
+                sx={{
+                  color: (theme) =>
+                    theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
+                }}
+              >
+                Profile
+              </ListItemText>
             </MenuItem>
             <MenuItem onClick={() => handleUserAction("settings")}>
               <ListItemIcon>
-                <Settings fontSize="small" />
+                <Settings
+                  fontSize="small"
+                  sx={{
+                    color: (theme) =>
+                      theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
+                  }}
+                />
               </ListItemIcon>
-              <ListItemText>Settings</ListItemText>
+              <ListItemText
+                sx={{
+                  color: (theme) =>
+                    theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
+                }}
+              >
+                Settings
+              </ListItemText>
             </MenuItem>
             <MenuItem onClick={() => handleUserAction("notifications")}>
               <ListItemIcon>
                 <Badge badgeContent={3} color="error">
-                  <Notifications fontSize="small" />
+                  <Notifications
+                    fontSize="small"
+                    sx={{
+                      color: (theme) =>
+                        theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
+                    }}
+                  />
                 </Badge>
               </ListItemIcon>
-              <ListItemText>Notifications</ListItemText>
+              <ListItemText
+                sx={{
+                  color: (theme) =>
+                    theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
+                }}
+              >
+                Notifications
+              </ListItemText>
             </MenuItem>
             <MenuItem onClick={() => handleUserAction("help")}>
               <ListItemIcon>
-                <Help fontSize="small" />
+                <Help
+                  fontSize="small"
+                  sx={{
+                    color: (theme) =>
+                      theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
+                  }}
+                />
               </ListItemIcon>
-              <ListItemText>Help & Support</ListItemText>
+              <ListItemText
+                sx={{
+                  color: (theme) =>
+                    theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
+                }}
+              >
+                Help & Support
+              </ListItemText>
             </MenuItem>
-            <Divider sx={{ my: 1 }} />
+            <Divider
+              sx={{
+                my: 1,
+                borderColor: (theme) =>
+                  theme.palette.mode === "light"
+                    ? "rgba(0, 0, 0, 0.2)"
+                    : "rgba(255, 255, 255, 0.2)",
+              }}
+            />
             <MenuItem
               onClick={() => handleUserAction("logout")}
               sx={{
-                color: (theme) => theme.palette.error.main,
+                color: "#FF6B6B",
                 "&:hover": {
-                  backgroundColor: (theme) => `${theme.palette.error.main}10`,
+                  backgroundColor: "rgba(255, 107, 107, 0.1)",
                 },
               }}
             >
               <ListItemIcon>
-                <ExitToApp fontSize="small" sx={{ color: "error.main" }} />
+                <ExitToApp fontSize="small" sx={{ color: "#FF6B6B" }} />
               </ListItemIcon>
               <ListItemText>Logout</ListItemText>
             </MenuItem>

@@ -377,7 +377,7 @@ const MeasurandGraphDialog = ({
               ? "linear-gradient(135deg, #EEF2FF 0%, #E0F2FE 100%)"
               : "linear-gradient(135deg, #1E3A8A 0%, #065F46 100%)",
           borderBottom: `1px solid ${
-            mode === "light" ? alpha("#6366F1", 0.2) : alpha("#22C55E", 0.2)
+            mode === "light" ? alpha("#10B981", 0.2) : alpha("#22C55E", 0.2)
           }`,
         }}
       >
@@ -412,12 +412,12 @@ const MeasurandGraphDialog = ({
                 fontWeight: 500,
                 background:
                   mode === "light"
-                    ? alpha("#6366F1", 0.1)
+                    ? alpha("#10B981", 0.1)
                     : alpha("#10B981", 0.2),
-                color: mode === "light" ? "#4F46E5" : "#10B981",
+                color: mode === "light" ? "#10B981" : "#10B981",
                 border: `1px solid ${
                   mode === "light"
-                    ? alpha("#6366F1", 0.3)
+                    ? alpha("#10B981", 0.3)
                     : alpha("#10B981", 0.3)
                 }`,
               }}
@@ -535,9 +535,9 @@ const MeasurandGraphDialog = ({
                         sx={{
                           background:
                             mode === "light"
-                              ? alpha("#6366F1", 0.1)
+                              ? alpha("#10B981", 0.1)
                               : alpha("#10B981", 0.2),
-                          color: mode === "light" ? "#4F46E5" : "#10B981",
+                          color: mode === "light" ? "#10B981" : "#10B981",
                         }}
                       />
                     ))}
@@ -549,14 +549,14 @@ const MeasurandGraphDialog = ({
                   "& .MuiOutlinedInput-notchedOutline": {
                     borderColor:
                       mode === "light"
-                        ? alpha("#6366F1", 0.3)
+                        ? alpha("#10B981", 0.3)
                         : alpha("#10B981", 0.3),
                   },
                   "&:hover .MuiOutlinedInput-notchedOutline": {
-                    borderColor: mode === "light" ? "#6366F1" : "#10B981",
+                    borderColor: mode === "light" ? "#10B981" : "#10B981",
                   },
                   "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                    borderColor: mode === "light" ? "#6366F1" : "#10B981",
+                    borderColor: mode === "light" ? "#10B981" : "#10B981",
                   },
                 }}
                 MenuProps={{
@@ -591,9 +591,9 @@ const MeasurandGraphDialog = ({
                     <Checkbox
                       checked={selectedMeasurands.includes(m)}
                       sx={{
-                        color: mode === "light" ? "#6366F1" : "#10B981",
+                        color: mode === "light" ? "#10B981" : "#10B981",
                         "&.Mui-checked": {
-                          color: mode === "light" ? "#6366F1" : "#10B981",
+                          color: mode === "light" ? "#10B981" : "#10B981",
                         },
                         padding: "0 8px 0 0",
                       }}
@@ -658,13 +658,13 @@ const MeasurandGraphDialog = ({
                         color: mode === "light" ? "#6366F1" : "#10B981",
                         borderColor:
                           mode === "light"
-                            ? alpha("#6366F1", 0.5)
+                            ? alpha("#10B981", 0.5)
                             : alpha("#10B981", 0.5),
                         "&:hover": {
-                          borderColor: mode === "light" ? "#6366F1" : "#10B981",
+                          borderColor: mode === "light" ? "#10B981" : "#10B981",
                           bgcolor:
                             mode === "light"
-                              ? alpha("#6366F1", 0.1)
+                              ? alpha("#10B981", 0.1)
                               : alpha("#10B981", 0.1),
                         },
                       }),

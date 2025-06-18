@@ -46,14 +46,14 @@ const MeasurandView = () => {
   const getTabGradients = () => ({
     background:
       mode === "light"
-        ? "linear-gradient(135deg, #ffffff, #f0f4ff)"
+        ? "linear-gradient(135deg, #ffffff, #f0fdf4)"
         : "linear-gradient(135deg, #1f2a44, #0a3d2e)",
     selected:
       mode === "light"
-        ? "linear-gradient(45deg, #1E40AF, #3B82F6)"
+        ? "linear-gradient(45deg, #10B981, #34D399)"
         : "linear-gradient(45deg, #166534, #22C55E)",
     hover:
-      mode === "light" ? "rgba(59, 130, 246, 0.2)" : "rgba(34, 197, 94, 0.2)",
+      mode === "light" ? "rgba(52, 211, 153, 0.2)" : "rgba(34, 197, 94, 0.2)",
   });
 
   const gradients = getTabGradients();
@@ -68,7 +68,7 @@ const MeasurandView = () => {
           background: gradients.background,
           boxShadow: (theme) =>
             theme.palette.mode === "light"
-              ? "0 4px 12px rgba(30, 64, 175, 0.1)"
+              ? "0 4px 12px rgba(16, 185, 129, 0.1)"
               : "0 4px 12px rgba(22, 101, 52, 0.2)",
           overflow: "hidden",
           "& .MuiTabs-flexContainer": {
@@ -95,7 +95,7 @@ const MeasurandView = () => {
               background: gradients.selected,
               boxShadow: (theme) =>
                 theme.palette.mode === "light"
-                  ? "0 4px 8px rgba(30, 64, 175, 0.2)"
+                  ? "0 4px 8px rgba(16, 185, 129, 0.2)"
                   : "0 4px 8px rgba(22, 101, 52, 0.3)",
             },
             "&:hover": {
@@ -103,7 +103,7 @@ const MeasurandView = () => {
               transform: "translateY(-2px)",
               boxShadow: (theme) =>
                 theme.palette.mode === "light"
-                  ? "0 4px 8px rgba(30, 64, 175, 0.15)"
+                  ? "0 4px 8px rgba(16, 185, 129, 0.15)"
                   : "0 4px 8px rgba(22, 101, 52, 0.15)",
             },
           },

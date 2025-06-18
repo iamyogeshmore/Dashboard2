@@ -18,7 +18,7 @@ const StyledSwitch = styled(Switch)(({ theme, checked }) => ({
       "& + .MuiSwitch-track": {
         background: checked
           ? "linear-gradient(45deg, #166534, #22C55E)"
-          : "linear-gradient(45deg, #1E40AF, #3B82F6)",
+          : "linear-gradient(45deg, #10B981, #34D399)",
         opacity: 1,
         border: 0,
       },
@@ -28,8 +28,8 @@ const StyledSwitch = styled(Switch)(({ theme, checked }) => ({
     width: 24,
     height: 24,
     background: checked
-      ? "linear-gradient(45deg, #064E3B, #15803D)"
-      : "linear-gradient(45deg, #1E3A8A, #3B82F6)",
+      ? "linear-gradient(45deg, #14532D, #15803D)"
+      : "linear-gradient(45deg, #059669, #10B981)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -38,8 +38,8 @@ const StyledSwitch = styled(Switch)(({ theme, checked }) => ({
   "& .MuiSwitch-track": {
     borderRadius: 30 / 2,
     background: checked
-      ? "linear-gradient(45deg, #064E3B, #15803D)"
-      : "linear-gradient(45deg, #1E3A8A, #3B82F6)",
+      ? "linear-gradient(45deg, #14532D, #15803D)"
+      : "linear-gradient(45deg, #059669, #10B981)",
     opacity: 1,
     transition: "background 0.4s ease",
     backdropFilter: "blur(6px)",
@@ -56,14 +56,14 @@ const ThemeToggle = () => {
         alignItems: "center",
         background:
           mode === "light"
-            ? "rgba(59, 130, 246, 0.1)"
+            ? "rgba(52, 211, 153, 0.1)"
             : "rgba(34, 197, 94, 0.1)",
         borderRadius: "24px",
         padding: "4px",
         backdropFilter: "blur(10px)",
         boxShadow: `0 4px 12px ${
           mode === "light"
-            ? "rgba(30, 64, 175, 0.15)"
+            ? "rgba(16, 185, 129, 0.15)"
             : "rgba(22, 101, 52, 0.15)"
         }`,
         transition: "all 0.3s ease",
@@ -77,7 +77,7 @@ const ThemeToggle = () => {
         <StyledSwitch
           checked={mode === "dark"}
           onChange={toggleTheme}
-          icon={<WbSunny sx={{ color: "#DBEAFE", fontSize: 18, m: "3px" }} />}
+          icon={<WbSunny sx={{ color: "#DCFCE7", fontSize: 18, m: "3px" }} />}
           checkedIcon={
             <NightsStay sx={{ color: "#DCFCE7", fontSize: 18, m: "3px" }} />
           }
