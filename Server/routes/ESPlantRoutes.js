@@ -8,7 +8,10 @@ const validatePlantId = (req, res, next) => {
   const plantId = req.params.plantId;
   if (!plantId || isNaN(parseInt(plantId))) {
     logger.error(`Invalid plant ID: ${plantId}`);
-    return res.status(400).json({ message: `Invalid plant ID: ${plantId}` });
+    return res.status(400).json({ 
+      status: "error",
+      message: `Invalid plant ID: ${plantId}` 
+    });
   }
   next();
 };
@@ -20,7 +23,10 @@ const validateTerminalId = (req, res, next) => {
     logger.error(`Invalid terminal ID: ${terminalId}`);
     return res
       .status(400)
-      .json({ message: `Invalid terminal ID: ${terminalId}` });
+      .json({ 
+        status: "error",
+        message: `Invalid terminal ID: ${terminalId}` 
+      });
   }
   next();
 };
@@ -30,7 +36,10 @@ const validatePatronId = (req, res, next) => {
   const patronId = req.params.patronId;
   if (!patronId || isNaN(parseInt(patronId))) {
     logger.error(`Invalid patron ID: ${patronId}`);
-    return res.status(400).json({ message: `Invalid patron ID: ${patronId}` });
+    return res.status(400).json({ 
+      status: "error",
+      message: `Invalid patron ID: ${patronId}` 
+    });
   }
   next();
 };
@@ -39,14 +48,16 @@ const validatePatronId = (req, res, next) => {
 const validateType = (req, res, next) => {
   const type = req.query.type;
   const validTypes = ["Terminal", "Measurand", "all"];
+  
   if (type && !validTypes.includes(type)) {
     logger.error(`Invalid type parameter: ${type}`);
     return res.status(400).json({
-      message: `Invalid type parameter: ${type}. Allowed values: ${validTypes.join(
-        ", "
-      )}`,
+      status: "error",
+      message: `Invalid type parameter: ${type}. Allowed values: ${validTypes.join(", ")}`,
     });
   }
+  
+  // Set default type if not provided
   req.query.type = type || "all";
   next();
 };

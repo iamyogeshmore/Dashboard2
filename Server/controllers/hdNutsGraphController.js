@@ -1,6 +1,7 @@
 const HDNutsGraph = require("../models/HDNutsGraph");
 const ESPlant = require("../models/ESPlant");
 const logger = require("../utils/logger");
+const HDNuts900 = require('../models/HDNuts900');
 
 // ----------------------- Get last 900 records -----------------------
 exports.getLast900Records = async (req, res, next) => {
@@ -165,6 +166,45 @@ exports.getRecordsByDateRange = async (req, res, next) => {
       stack: error.stack,
     });
     next(error);
+  }
+};
+
+// GET /api/hdnuts/measurand-value?terminalId=6&measurandId=2&profile=block
+exports.getMeasurandValue = async (req, res) => {
+  try {
+    const { terminalId, measurandId, profile } = req.query;
+    if (!terminalId || !measurandId || !profile) {
+      return res.status(400).json({ status: 'error', message: 'Missing required parameters.' });
+    }
+    let Model;
+    if (profile.toLowerCase() === 'block') {
+      Model = HDNuts900;
+    } else if (profile.toLowerCase() === 'trend') {
+      Model = HDNutsGraph;
+    } else {
+      return res.status(400).json({ status: 'error', message: 'Invalid profile. Use block or trend.' });
+    }
+    const doc = await Model.findOne({ TerminalId: Number(terminalId) }).sort({ TimeStamp: -1 }).lean();
+    if (!doc) {
+      return res.status(404).json({ status: 'error', message: 'No data found for this terminal.' });
+    }
+    const meas = (doc.MeasurandData || []).find(m => m.MeasurandId === Number(measurandId));
+    if (!meas) {
+      return res.status(404).json({ status: 'error', message: 'Measurand not found.' });
+    }
+    res.status(200).json({
+      status: 'success',
+      data: {
+        TerminalId: doc.TerminalId,
+        TerminalName: doc.TerminalName,
+        TimeStamp: doc.TimeStamp,
+        MeasurandId: meas.MeasurandId,
+        MeasurandName: meas.MeasurandName,
+        MeasurandValue: meas.MeasurandValue,
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ status: 'error', message: err.message });
   }
 };
 

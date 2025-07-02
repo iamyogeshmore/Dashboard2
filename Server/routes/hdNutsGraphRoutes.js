@@ -39,4 +39,7 @@ router.get(
   hdNutsGraphController.getRecordsByDateRange
 );
 
+// Get MeasurandValue from HDNuts900 or HDNutsGraph based on profile
+router.get('/measurand-value', hdNutsGraphController.getMeasurandValue);
+
 module.exports = router;

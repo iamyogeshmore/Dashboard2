@@ -9,6 +9,7 @@ import TableCard from "./HistoricalDataDisplay/TableCard";
 import HistoricalDataGrid from "./HistoricalDataDisplay/HistoricalDataGrid";
 import DeleteTableConfirmationDialog from "../Helper/DeleteTableConfirmationDialog";
 import { Dashboard } from "@mui/icons-material";
+import { getPlants, getTerminals, getMeasurands, createHistoricalTable, getHistoricalTables, deleteHistoricalTable, getHistoricalTableById } from "../../../services/apiService";
 
 const HistoricalDataDisplayTV = () => {
   const { mode } = useThemeContext();
@@ -19,26 +20,123 @@ const HistoricalDataDisplayTV = () => {
   const { tableId } = useParams();
   const navigate = useNavigate();
 
-  const profiles = ["Profile 1", "Profile 2"];
-  const plants = ["Unit 1 Mill Motors"];
-  const terminals = ["Mill Motor 1A 680kW"];
-  const measurand = [
-    "Voltage (V)",
-    "Current (A)",
-    "Power (kW)",
-    "Frequency (Hz)",
-    "Voltage2 (V)",
-    "Current2 (A)",
-    "Power2 (kW)",
-    "Frequency2 (Hz)",
-  ];
+  const profiles = ["Block", "Trend"];
+  const [plants, setPlants] = useState([]);
+  const [terminals, setTerminals] = useState([]);
+  const [measurandOptions, setMeasurandOptions] = useState([]);
+  const [loading, setLoading] = useState({ plants: false, terminals: false, measurands: false });
+  const [error, setError] = useState({ plants: null, terminals: null, measurands: null });
+  const [selectedTable, setSelectedTable] = useState(null);
+  const [loadingTable, setLoadingTable] = useState(false);
+  const [tableError, setTableError] = useState(null);
+
+  const fetchTables = async () => {
+    try {
+      const response = await getHistoricalTables();
+      if (response.status === "success" && Array.isArray(response.data)) {
+        setTables(response.data);
+      } else {
+        setTables([]);
+      }
+    } catch (err) {
+      setTables([]);
+    }
+  };
 
   useEffect(() => {
-    const storedTables = localStorage.getItem("historicalTables");
-    if (storedTables) {
-      setTables(JSON.parse(storedTables));
-    }
+    fetchTables();
   }, []);
+
+  // Fetch plants on mount
+  useEffect(() => {
+    fetchPlants();
+  }, []);
+
+  useEffect(() => {
+    if (tableId) {
+      setLoadingTable(true);
+      setTableError(null);
+      getHistoricalTableById(tableId)
+        .then((res) => {
+          if (res.status === 'success' && res.data) {
+            setSelectedTable(res.data);
+          } else {
+            setSelectedTable(null);
+            setTableError('Table Not Found');
+          }
+        })
+        .catch(() => {
+          setSelectedTable(null);
+          setTableError('Table Not Found');
+        })
+        .finally(() => setLoadingTable(false));
+    } else {
+      setSelectedTable(null);
+      setLoadingTable(false);
+      setTableError(null);
+    }
+  }, [tableId]);
+
+  const fetchPlants = async () => {
+    setLoading((prev) => ({ ...prev, plants: true }));
+    setError((prev) => ({ ...prev, plants: null }));
+    try {
+      const response = await getPlants("Terminal");
+      if (response.status === "success" && Array.isArray(response.data)) {
+        setPlants(response.data.map((plant) => plant.name));
+      } else {
+        setPlants([]);
+        setError((prev) => ({ ...prev, plants: response.message || "No plants found" }));
+      }
+    } catch (err) {
+      setPlants([]);
+      setError((prev) => ({ ...prev, plants: err.message }));
+    } finally {
+      setLoading((prev) => ({ ...prev, plants: false }));
+    }
+  };
+
+  const fetchTerminals = async (plantName) => {
+    setLoading((prev) => ({ ...prev, terminals: true }));
+    setError((prev) => ({ ...prev, terminals: null }));
+    try {
+      const plantObj = (await getPlants("Terminal")).data.find((p) => p.name === plantName);
+      if (!plantObj) return setTerminals([]);
+      const response = await getTerminals(plantObj.id, "Terminal");
+      if (response.status === "success" && Array.isArray(response.data)) {
+        setTerminals(response.data.map((t) => ({ id: t.TerminalId, name: t.TerminalName })));
+      } else {
+        setTerminals([]);
+        setError((prev) => ({ ...prev, terminals: response.message || "No terminals found" }));
+      }
+    } catch (err) {
+      setTerminals([]);
+      setError((prev) => ({ ...prev, terminals: err.message }));
+    } finally {
+      setLoading((prev) => ({ ...prev, terminals: false }));
+    }
+  };
+
+  const fetchMeasurands = async (plantName, terminalId) => {
+    setLoading((prev) => ({ ...prev, measurands: true }));
+    setError((prev) => ({ ...prev, measurands: null }));
+    try {
+      const plantObj = (await getPlants("Terminal")).data.find((p) => p.name === plantName);
+      if (!plantObj) return setMeasurandOptions([]);
+      const response = await getMeasurands(plantObj.id, terminalId, "Terminal");
+      if (response.status === "success" && Array.isArray(response.data)) {
+        setMeasurandOptions(response.data.map((m) => ({ id: m.MeasurandId, name: m.MeasurandName })));
+      } else {
+        setMeasurandOptions([]);
+        setError((prev) => ({ ...prev, measurands: response.message || "No measurands found" }));
+      }
+    } catch (err) {
+      setMeasurandOptions([]);
+      setError((prev) => ({ ...prev, measurands: err.message }));
+    } finally {
+      setLoading((prev) => ({ ...prev, measurands: false }));
+    }
+  };
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -48,28 +146,22 @@ const HistoricalDataDisplayTV = () => {
     setOpenDialog(false);
   };
 
-  const handleCreateTable = (formData) => {
-    const newTable = {
-      id: uuidv4(),
+  const handleCreateTable = async (formData) => {
+    // formData: { profile, plant, terminal, measurand, name }
+    // Find plantId and terminalId from names
+    const plantObj = (await getPlants("Terminal")).data.find((p) => p.name === formData.plant);
+    const terminalObj = terminals.find((t) => t.id === formData.terminal);
+    if (!plantObj || !terminalObj) return;
+    const measurandIds = formData.measurand;
+    const payload = {
+      name: formData.name,
       profile: formData.profile,
-      plant: formData.plant,
-      terminal: formData.terminal,
-      measurand: formData.measurand,
-      name: formData.name, // Include the name from formData
-      createdTime: new Date().toLocaleString("en-US", {
-        year: "numeric",
-        month: "numeric",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: true,
-      }),
+      plantId: plantObj.id,
+      terminalId: terminalObj.id,
+      measurandIds,
     };
-
-    const updatedTables = [...tables, newTable];
-    setTables(updatedTables);
-    localStorage.setItem("historicalTables", JSON.stringify(updatedTables));
+    await createHistoricalTable(payload);
+    fetchTables();
     setOpenDialog(false);
   };
 
@@ -83,13 +175,16 @@ const HistoricalDataDisplayTV = () => {
     setTableToDelete(null);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (tableToDelete) {
-      const updatedTables = tables.filter((t) => t.id !== tableToDelete.id);
-      setTables(updatedTables);
-      localStorage.setItem("historicalTables", JSON.stringify(updatedTables));
-      if (tableId === tableToDelete.id) {
-        navigate("/views/terminal", { state: { tab: 1 } });
+      try {
+        await deleteHistoricalTable(tableToDelete._id || tableToDelete.id);
+        fetchTables();
+        if (tableId === (tableToDelete._id || tableToDelete.id)) {
+          navigate("/views/terminal", { state: { tab: 1 } });
+        }
+      } catch (err) {
+        // Optionally show error
       }
     }
     handleCloseDeleteDialog();
@@ -104,7 +199,6 @@ const HistoricalDataDisplayTV = () => {
       table.id === updatedTable.id ? updatedTable : table
     );
     setTables(updatedTables);
-    localStorage.setItem("historicalTables", JSON.stringify(updatedTables));
   };
 
   const getGradients = () => ({
@@ -131,11 +225,17 @@ const HistoricalDataDisplayTV = () => {
   return (
     <Box sx={{ p: 2, minHeight: "80vh" }}>
       {tableId ? (
-        <HistoricalDataGrid
-          table={tables.find((t) => t.id === tableId) || null}
-          onBack={handleBackToCards}
-          onUpdateTable={handleUpdateTable}
-        />
+        loadingTable ? (
+          <Paper sx={{ p: 4, minHeight: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Typography variant="h6">Loading table...</Typography></Paper>
+        ) : tableError ? (
+          <Paper sx={{ p: 4, minHeight: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Typography variant="h6" color="error">{tableError}</Typography></Paper>
+        ) : (
+          <HistoricalDataGrid
+            table={selectedTable}
+            onBack={handleBackToCards}
+            onUpdateTable={handleUpdateTable}
+          />
+        )
       ) : (
         <>
           <Paper
@@ -231,7 +331,7 @@ const HistoricalDataDisplayTV = () => {
             >
               {tables.map((table) => (
                 <TableCard
-                  key={table.id}
+                  key={table._id || table.id}
                   table={table}
                   onDelete={handleOpenDeleteDialog}
                 />
@@ -246,7 +346,11 @@ const HistoricalDataDisplayTV = () => {
             profiles={profiles}
             plants={plants}
             terminals={terminals}
-            measurand={measurand}
+            measurand={measurandOptions}
+            loading={loading}
+            error={error}
+            fetchTerminals={fetchTerminals}
+            fetchMeasurands={fetchMeasurands}
           />
           <DeleteTableConfirmationDialog
             open={deleteDialogOpen}

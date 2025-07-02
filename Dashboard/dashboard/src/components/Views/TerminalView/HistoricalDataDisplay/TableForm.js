@@ -25,6 +25,8 @@ const TableForm = ({
   terminals,
   measurand,
   setSnackbar,
+  loading = {},
+  error = {},
 }) => {
   const { mode } = useThemeContext();
   const theme = useTheme();
@@ -76,7 +78,7 @@ const TableForm = ({
 
   const handleSelectAllMeasurands = (event) => {
     if (event.target.checked) {
-      setFormData({ ...formData, measurand: [...measurand] });
+      setFormData({ ...formData, measurand: [...measurand.map((m) => m.id)] });
       setSnackbar({
         open: true,
         message: "All Measurands selected.",
@@ -258,7 +260,7 @@ const TableForm = ({
 
       <FormControl
         sx={getFormControlStyles("plant")}
-        disabled={!formData.profile}
+        disabled={!formData.profile || loading.plants}
       >
         <InputLabel sx={{ display: "flex", alignItems: "center" }}>
           <Zoom in={true} style={{ transitionDelay: "150ms" }}>
@@ -288,7 +290,11 @@ const TableForm = ({
             },
           }}
         >
-          {plants.length === 0 ? (
+          {loading.plants ? (
+            <MenuItem disabled>Loading plants...</MenuItem>
+          ) : error.plants ? (
+            <MenuItem disabled>{error.plants}</MenuItem>
+          ) : plants.length === 0 ? (
             <MenuItem disabled>No plants available</MenuItem>
           ) : (
             plants.map((plant) => (
@@ -343,12 +349,12 @@ const TableForm = ({
             <MenuItem disabled>No terminals available</MenuItem>
           ) : (
             terminals.map((terminal) => (
-              <MenuItem key={terminal} value={terminal}>
+              <MenuItem key={terminal.id} value={terminal.id}>
                 <ListItemText
-                  primary={terminal}
+                  primary={terminal.name}
                   sx={{
                     "& .MuiTypography-root": {
-                      fontWeight: formData.terminal === terminal ? 600 : 400,
+                      fontWeight: formData.terminal === terminal.id ? 600 : 400,
                     },
                   }}
                 />
@@ -397,24 +403,27 @@ const TableForm = ({
                   }}
                 />
               ) : (
-                selected.map((value) => (
-                  <Chip
-                    key={value}
-                    label={value}
-                    size="small"
-                    sx={{
-                      background:
-                        mode === "light"
-                          ? alpha(iconStyles.measurand.color, 0.2)
-                          : alpha(iconStyles.measurand.color, 0.4),
-                      color:
-                        mode === "light"
-                          ? iconStyles.measurand.color
-                          : "#ffffff",
-                      fontWeight: 500,
-                    }}
-                  />
-                ))
+                selected.map((id) => {
+                  const meas = measurand.find((m) => m.id === id);
+                  return (
+                    <Chip
+                      key={id}
+                      label={meas ? meas.name : id}
+                      size="small"
+                      sx={{
+                        background:
+                          mode === "light"
+                            ? alpha(iconStyles.measurand.color, 0.2)
+                            : alpha(iconStyles.measurand.color, 0.4),
+                        color:
+                          mode === "light"
+                            ? iconStyles.measurand.color
+                            : "#ffffff",
+                        fontWeight: 500,
+                      }}
+                    />
+                  );
+                })
               )}
             </Box>
           )}
@@ -447,13 +456,13 @@ const TableForm = ({
             <MenuItem disabled>No measurands available</MenuItem>
           ) : (
             measurand.map((m) => (
-              <MenuItem key={m} value={m}>
-                <Checkbox checked={formData.measurand.includes(m)} />
+              <MenuItem key={m.id} value={m.id}>
+                <Checkbox checked={formData.measurand.includes(m.id)} />
                 <ListItemText
-                  primary={m}
+                  primary={m.name}
                   sx={{
                     "& .MuiTypography-root": {
-                      fontWeight: formData.measurand.includes(m) ? 600 : 400,
+                      fontWeight: formData.measurand.includes(m.id) ? 600 : 400,
                     },
                   }}
                 />

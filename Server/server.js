@@ -8,7 +8,7 @@ const ESPlantRoutes = require("./routes/ESPlantRoutes");
 const esPlantTerminalRoutes = require("./routes/esPlantTerminalRoutes");
 const hdNutsGraphRoutes = require("./routes/hdNutsGraphRoutes");
 const logRoutes = require("./routes/logRoutes");
-const { initializeWebSocket } = require("./websocket");
+const esHistoricalTableRoutes = require('./routes/ESHistoricalTableRoutes');
 const http = require("http");
 
 // ----------------------- Load environment variables from .env file -----------------------
@@ -19,9 +19,6 @@ const PORT = process.env.PORT || 8008;
 
 // ----------------------- Create HTTP server -----------------------
 const server = http.createServer(app);
-
-// ----------------------- Initialize WebSocket -----------------------
-initializeWebSocket(server);
 
 // ----------------------- Apply middleware for parsing JSON and URL-encoded data -----------------------
 app.use(express.json({ limit: "10mb" }));
@@ -54,7 +51,9 @@ app.get("/health", (req, res) => {
 app.use("/api/plants", ESPlantRoutes);
 app.use("/api/live-value", esPlantTerminalRoutes);
 app.use("/api/history", hdNutsGraphRoutes);
+app.use("/api/hdnuts", hdNutsGraphRoutes);
 app.use("/api/logs", logRoutes);
+app.use('/api/historical-tables', esHistoricalTableRoutes);
 
 // ----------------------- Handle 404 for undefined routes -----------------------
 app.use((req, res) => {

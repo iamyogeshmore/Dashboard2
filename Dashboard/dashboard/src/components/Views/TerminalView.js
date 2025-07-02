@@ -22,7 +22,6 @@ const TerminalView = () => {
   }, []);
 
   useEffect(() => {
-    // Check for navigation state to set the tab
     if (location.state?.tab !== undefined) {
       setTabValue(location.state.tab);
     }

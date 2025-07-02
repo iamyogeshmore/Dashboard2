@@ -48,6 +48,7 @@ import ExportPDFButton from "../../Helper/ExportPDFButton";
 import ExportExcelButton from "../../Helper/ExportExcelButton";
 import MeasurandGraphDialog from "../../Helper/MeasurandGraphDialog";
 import { useParams } from "react-router-dom";
+import { getHDNutsMeasurandValue } from '../../../../services/apiService';
 
 const generateMockData = (measurands, numRecords = 1000) => {
   const now = new Date();
@@ -85,7 +86,9 @@ const HistoricalDataGrid = ({ table: propTable, onBack, onUpdateTable }) => {
     "Frequency (Hz)",
   ];
   const initialMeasurands =
-    Array.isArray(table?.measurand) && table.measurand.length > 0
+    Array.isArray(table?.measurandDisplayNames) && table.measurandDisplayNames.length > 0
+      ? table.measurandDisplayNames
+      : Array.isArray(table?.measurand) && table.measurand.length > 0
       ? table.measurand
       : defaultMeasurands;
   const [measurand, setMeasurand] = useState(initialMeasurands);
@@ -97,6 +100,8 @@ const HistoricalDataGrid = ({ table: propTable, onBack, onUpdateTable }) => {
   const [showPercentage, setShowPercentage] = useState(false);
   const [tableName, setTableName] = useState(table?.name || "");
   const [isEditingName, setIsEditingName] = useState(false);
+  const [loadingHDNuts, setLoadingHDNuts] = useState(false);
+  const [hdNutsError, setHDNutsError] = useState(null);
 
   useEffect(() => {
     if (!propTable && tableId) {
@@ -121,10 +126,62 @@ const HistoricalDataGrid = ({ table: propTable, onBack, onUpdateTable }) => {
   }, [tableId, propTable]);
 
   useEffect(() => {
+    if (table) {
+      if (Array.isArray(table.measurandDisplayNames) && table.measurandDisplayNames.length > 0) {
+        setMeasurand(table.measurandDisplayNames);
+      } else if (Array.isArray(table.measurand) && table.measurand.length > 0) {
+        setMeasurand(table.measurand);
+      } else {
+        setMeasurand(defaultMeasurands);
+      }
+    }
+  }, [table]);
+
+  useEffect(() => {
     if (!table?.data) {
       setFilteredRows(generateMockData(measurand, 1000));
     }
   }, [measurand, table?.data]);
+
+  useEffect(() => {
+    async function fetchHDNutsData() {
+      if (!table) return;
+      // Only fetch for Block or Trend profiles
+      if (table.profile && (table.profile.toLowerCase() === 'block' || table.profile.toLowerCase() === 'trend')) {
+        setLoadingHDNuts(true);
+        setHDNutsError(null);
+        try {
+          // If table.measurandIds exists, use it, else fallback to table.measurand
+          const measurandIds = table.measurandIds || table.measurand || [];
+          const rows = [];
+          // For each measurand, fetch the value
+          for (const measId of measurandIds) {
+            const res = await getHDNutsMeasurandValue({
+              terminalId: table.terminalId || table.terminal,
+              measurandId: measId,
+              profile: table.profile
+            });
+            if (res.status === 'success' && res.data) {
+              // Map to grid row format
+              const row = {
+                id: measId,
+                timestamp: res.data.TimeStamp || new Date().toISOString(),
+                [res.data.MeasurandName || measId]: res.data.MeasurandValue
+              };
+              rows.push(row);
+            }
+          }
+          setFilteredRows(rows);
+        } catch (err) {
+          setHDNutsError('Failed to fetch data');
+        } finally {
+          setLoadingHDNuts(false);
+        }
+      }
+    }
+    fetchHDNutsData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table]);
 
   const handleUpdateTableName = () => {
     if (tableName.trim()) {
@@ -142,7 +199,13 @@ const HistoricalDataGrid = ({ table: propTable, onBack, onUpdateTable }) => {
     }
   };
 
-  if (!table || !table.measurand) {
+  const hasMeasurands = table && (
+    (Array.isArray(table.measurandDisplayNames) && table.measurandDisplayNames.length > 0) ||
+    (Array.isArray(table.measurand) && table.measurand.length > 0) ||
+    (Array.isArray(table.measurandIds) && table.measurandIds.length > 0)
+  );
+
+  if (!table || !hasMeasurands) {
     return (
       <Paper
         sx={{
@@ -199,6 +262,14 @@ const HistoricalDataGrid = ({ table: propTable, onBack, onUpdateTable }) => {
         </Button>
       </Paper>
     );
+  }
+
+  if (loadingHDNuts) {
+    return <Paper sx={{ p: 4, minHeight: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Typography variant="h6">Loading data...</Typography></Paper>;
+  }
+
+  if (hdNutsError) {
+    return <Paper sx={{ p: 4, minHeight: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Typography variant="h6" color="error">{hdNutsError}</Typography></Paper>;
   }
 
   const handleOpenGraphDialog = (providedMeasurand) => {

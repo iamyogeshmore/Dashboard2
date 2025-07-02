@@ -4,6 +4,7 @@ const logger = require("../utils/logger");
 // ----------------------- Helpers -----------------------
 const sendSuccess = (res, message, data = [], extra = {}) => {
   res.status(200).json({
+    status: "success",
     message,
     ...extra,
     data,
@@ -11,7 +12,17 @@ const sendSuccess = (res, message, data = [], extra = {}) => {
 };
 
 const sendNotFound = (res, message) => {
-  res.status(404).json({ message });
+  res.status(404).json({ 
+    status: "error",
+    message 
+  });
+};
+
+const sendError = (res, message, statusCode = 400) => {
+  res.status(statusCode).json({ 
+    status: "error",
+    message 
+  });
 };
 
 // ----------------------- Fetch all plants -----------------------
@@ -20,24 +31,37 @@ exports.getPlants = async (req, res, next) => {
     const { type } = req.query;
     let query = {};
 
+    // Validate type parameter
+    if (type && !["Terminal", "Measurand", "all"].includes(type)) {
+      logger.warn(`Invalid type parameter: ${type}`);
+      return sendError(res, `Invalid type parameter: ${type}. Allowed values: Terminal, Measurand, all`);
+    }
+
+    // Apply type filter
     if (type && type.toLowerCase() !== "all") {
-      query = { Type: type };
+      query.Type = type;
       logger.info(`Filtering plants by type: ${type}`);
     }
 
-    const plants = await ESPlant.find(query).select("_id DisplayName").lean();
+    const plants = await ESPlant.find(query)
+      .select("_id DisplayName Type PatronId")
+      .lean()
+      .exec();
 
     if (!plants.length) {
       logger.info(`No plants found${type ? ` for type: ${type}` : ""}`);
       return sendSuccess(
         res,
-        `No plants available${type ? ` for type: ${type}` : ""}`
+        `No plants available${type ? ` for type: ${type}` : ""}`,
+        []
       );
     }
 
-    const formatted = plants.map(({ _id, DisplayName }) => ({
+    const formatted = plants.map(({ _id, DisplayName, Type, PatronId }) => ({
       plantid: _id,
       PlantName: DisplayName,
+      Type,
+      PatronId,
     }));
 
     logger.info(
@@ -58,15 +82,29 @@ exports.getTerminals = async (req, res, next) => {
     const { plantId } = req.params;
     const { type } = req.query;
 
-    let query = { _id: plantId };
+    // Validate plantId
+    const plantIdNum = parseInt(plantId, 10);
+    if (isNaN(plantIdNum)) {
+      logger.warn(`Invalid plant ID format: ${plantId}`);
+      return sendError(res, `Invalid plant ID format: ${plantId}`);
+    }
+
+    // Validate type parameter
+    if (type && !["Terminal", "Measurand", "all"].includes(type)) {
+      logger.warn(`Invalid type parameter: ${type}`);
+      return sendError(res, `Invalid type parameter: ${type}. Allowed values: Terminal, Measurand, all`);
+    }
+
+    let query = { _id: plantIdNum };
     if (type && type.toLowerCase() !== "all") {
       query.Type = type;
       logger.info(`Filtering plant by ID: ${plantId} and type: ${type}`);
     }
 
     const plant = await ESPlant.findOne(query)
-      .select("DisplayName TerminalList")
-      .lean();
+      .select("DisplayName TerminalList Type")
+      .lean()
+      .exec();
 
     if (!plant) {
       logger.warn(
@@ -79,9 +117,9 @@ exports.getTerminals = async (req, res, next) => {
     }
 
     const terminals = (plant.TerminalList || []).map(
-      ({ TerminalId, DisplayName }) => ({
+      ({ TerminalId, DisplayName, TerminalName }) => ({
         TerminalId,
-        TerminalName: DisplayName,
+        TerminalName: DisplayName || TerminalName,
       })
     );
 
@@ -99,6 +137,7 @@ exports.getTerminals = async (req, res, next) => {
         [],
         {
           plantName: plant.DisplayName,
+          plantType: plant.Type,
         }
       );
     }
@@ -110,6 +149,7 @@ exports.getTerminals = async (req, res, next) => {
     );
     sendSuccess(res, `Fetched ${terminals.length} terminals`, terminals, {
       plantName: plant.DisplayName,
+      plantType: plant.Type,
     });
   } catch (error) {
     logger.error(`Error fetching terminals: ${error.message}`, {
@@ -124,17 +164,37 @@ exports.getMeasurands = async (req, res, next) => {
   try {
     const { plantId, terminalId } = req.params;
     const { type } = req.query;
+    
+    // Validate IDs
+    const plantIdNum = parseInt(plantId, 10);
     const terminalIdNum = parseInt(terminalId, 10);
+    
+    if (isNaN(plantIdNum)) {
+      logger.warn(`Invalid plant ID format: ${plantId}`);
+      return sendError(res, `Invalid plant ID format: ${plantId}`);
+    }
+    
+    if (isNaN(terminalIdNum)) {
+      logger.warn(`Invalid terminal ID format: ${terminalId}`);
+      return sendError(res, `Invalid terminal ID format: ${terminalId}`);
+    }
 
-    let query = { _id: plantId };
+    // Validate type parameter
+    if (type && !["Terminal", "Measurand", "all"].includes(type)) {
+      logger.warn(`Invalid type parameter: ${type}`);
+      return sendError(res, `Invalid type parameter: ${type}. Allowed values: Terminal, Measurand, all`);
+    }
+
+    let query = { _id: plantIdNum };
     if (type && type.toLowerCase() !== "all") {
       query.Type = type;
       logger.info(`Filtering plant by ID: ${plantId} and type: ${type}`);
     }
 
     const plant = await ESPlant.findOne(query)
-      .select("DisplayName TerminalList MeasurandList")
-      .lean();
+      .select("DisplayName TerminalList MeasurandList Type")
+      .lean()
+      .exec();
 
     if (!plant) {
       logger.warn(
@@ -164,10 +224,10 @@ exports.getMeasurands = async (req, res, next) => {
     }
 
     const measurands = (plant.MeasurandList || []).map(
-      ({ MeasurandId, DisplayName, Unit }) => ({
+      ({ MeasurandId, DisplayName, DisplayUnit, MeasurandName, Unit }) => ({
         MeasurandId,
-        MeasurandName: DisplayName,
-        Unit,
+        MeasurandName: DisplayName || MeasurandName,
+        Unit: DisplayUnit || Unit,
       })
     );
 
@@ -179,7 +239,8 @@ exports.getMeasurands = async (req, res, next) => {
       );
       return sendSuccess(res, `No measurands found`, [], {
         plantName: plant.DisplayName,
-        terminalName: terminal.DisplayName,
+        plantType: plant.Type,
+        terminalName: terminal.DisplayName || terminal.TerminalName,
       });
     }
 
@@ -190,7 +251,8 @@ exports.getMeasurands = async (req, res, next) => {
     );
     sendSuccess(res, `Fetched ${measurands.length} measurands`, measurands, {
       plantName: plant.DisplayName,
-      terminalName: terminal.DisplayName,
+      plantType: plant.Type,
+      terminalName: terminal.DisplayName || terminal.TerminalName,
     });
   } catch (error) {
     logger.error(`Error fetching measurands: ${error.message}`, {
@@ -206,7 +268,20 @@ exports.getPlantsByPatronId = async (req, res, next) => {
     const { patronId } = req.params;
     const { type } = req.query;
 
-    let query = { PatronId: parseInt(patronId, 10) };
+    // Validate patronId
+    const patronIdNum = parseInt(patronId, 10);
+    if (isNaN(patronIdNum)) {
+      logger.warn(`Invalid patron ID format: ${patronId}`);
+      return sendError(res, `Invalid patron ID format: ${patronId}`);
+    }
+
+    // Validate type parameter
+    if (type && !["Terminal", "Measurand", "all"].includes(type)) {
+      logger.warn(`Invalid type parameter: ${type}`);
+      return sendError(res, `Invalid type parameter: ${type}. Allowed values: Terminal, Measurand, all`);
+    }
+
+    let query = { PatronId: patronIdNum };
     if (type && type.toLowerCase() !== "all") {
       query.Type = type;
       logger.info(
@@ -214,7 +289,10 @@ exports.getPlantsByPatronId = async (req, res, next) => {
       );
     }
 
-    const plants = await ESPlant.find(query).select("_id DisplayName").lean();
+    const plants = await ESPlant.find(query)
+      .select("_id DisplayName Type PatronId")
+      .lean()
+      .exec();
 
     if (!plants.length) {
       logger.info(
@@ -226,13 +304,16 @@ exports.getPlantsByPatronId = async (req, res, next) => {
         res,
         `No plants available for PatronId: ${patronId}${
           type ? ` for type: ${type}` : ""
-        }`
+        }`,
+        []
       );
     }
 
-    const formatted = plants.map(({ _id, DisplayName }) => ({
+    const formatted = plants.map(({ _id, DisplayName, Type, PatronId }) => ({
       plantid: _id,
       PlantName: DisplayName,
+      Type,
+      PatronId,
     }));
 
     logger.info(
@@ -241,7 +322,7 @@ exports.getPlantsByPatronId = async (req, res, next) => {
       }`
     );
     sendSuccess(res, `Fetched ${formatted.length} plants`, formatted, {
-      patronId: parseInt(patronId, 10),
+      patronId: patronIdNum,
     });
   } catch (error) {
     logger.error(`Error fetching plants by PatronId: ${error.message}`, {

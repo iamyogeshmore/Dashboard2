@@ -18,6 +18,7 @@ import {
   alpha,
   Snackbar,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import {
   Save,
@@ -40,8 +41,14 @@ import "/node_modules/react-resizable/css/styles.css";
 import { v4 as uuidv4 } from "uuid";
 import NumberWidget from "../Widget/NumberWidget";
 import GraphWidget from "../Widget/GraphWidget";
+import {
+  getPlants,
+  getTerminals,
+  getMeasurands,
+  getLiveMeasurandValue,
+} from "../../../services/apiService";
 
-const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
+const CurrentDataDisplayTV = ({ saveView, savedViews, deleteView }) => {
   const { mode } = useThemeContext();
   const theme = useTheme();
   const [widgetType, setWidgetType] = useState("Number");
@@ -65,44 +72,195 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
     severity: "success",
   });
 
+  // API data states
+  const [plants, setPlants] = useState([]);
+  const [terminals, setTerminals] = useState([]);
+  const [measurandOptions, setMeasurandOptions] = useState([]);
+  const [loading, setLoading] = useState({
+    plants: false,
+    terminals: false,
+    measurands: false,
+  });
+
   const DEFAULT_WIDGET_WIDTH = 2;
   const DEFAULT_WIDGET_HEIGHT = 3;
 
   const graphTypes = ["Number", "Graph"];
-  const plants = ["Unit 1 Mill Motors"];
-  const terminals = ["Mill Motor 1A 680kW"];
-  const measurandOptions = [
-    "Voltage (V)",
-    "Current (A)",
-    "Power (kW)",
-    "Frequency (Hz)",
-    "Voltage2 (V)",
-    "Current2 (A)",
-    "Power2 (kW)",
-    "Frequency2 (Hz)",
-    "Voltage3 (V)",
-    "Current3 (A)",
-    "Power3 (kW)",
-    "Frequency3 (Hz)",
-    "Voltage4 (V)",
-    "Current4 (A)",
-    "Power4 (kW)",
-    "Frequency4 (Hz)",
-  ];
-
   const selectWidth = 180;
 
-  // Mock data fetch function (replace with actual API call)
-  const fetchLatestData = (terminal, measurand) => {
-    return {
-      value: (Math.random() * 100).toFixed(2),
-      timestamp: new Date().toLocaleString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: true,
-      }),
-    };
+  // Add a ref to store the current widgets
+  const widgetsRef = useRef(widgets);
+
+  // Update ref when widgets change
+  useEffect(() => {
+    widgetsRef.current = widgets;
+  }, [widgets]);
+
+  // Fetch plants on component mount
+  useEffect(() => {
+    fetchPlants();
+  }, []);
+
+  // Fetch plants from API
+  const fetchPlants = async () => {
+    setLoading((prev) => ({ ...prev, plants: true }));
+    try {
+      // For Terminal view, fetch only Terminal type plants
+      const response = await getPlants("Terminal");
+      console.log("fetchPlants response:", response); // Debug log
+      if (response.status === "success" && Array.isArray(response.data)) {
+        const mappedPlants = response.data.map((plant) => ({
+          id: plant.id,
+          name: plant.name,
+          type: plant.type,
+          patronId: plant.patronId,
+        }));
+        console.log("Mapped plants:", mappedPlants); // Debug log
+        setPlants(mappedPlants);
+        if (mappedPlants.length === 0) {
+          setSnackbar({
+            open: true,
+            message: "No Terminal type plants available",
+            severity: "warning",
+          });
+        }
+      } else {
+        throw new Error(response.message || "Invalid response format");
+      }
+    } catch (error) {
+      console.error("Error fetching plants:", error);
+      setSnackbar({
+        open: true,
+        message: `Error fetching plants: ${error.message}`,
+        severity: "error",
+      });
+    } finally {
+      setLoading((prev) => ({ ...prev, plants: false }));
+    }
+  };
+
+  // Fetch terminals when plant changes
+  const fetchTerminals = async (plantId) => {
+    if (!plantId) return;
+
+    setLoading((prev) => ({ ...prev, terminals: true }));
+    try {
+      // For Terminal view, fetch terminals with Terminal type filter
+      const response = await getTerminals(plantId, "Terminal");
+      console.log("fetchTerminals response:", response); // Debug log
+      if (response.status === "success" && Array.isArray(response.data)) {
+        const mappedTerminals = response.data.map((terminal) => ({
+          id: terminal.TerminalId,
+          name: terminal.TerminalName,
+        }));
+        console.log("Mapped terminals:", mappedTerminals); // Debug log
+        setTerminals(mappedTerminals);
+        if (mappedTerminals.length === 0) {
+          setSnackbar({
+            open: true,
+            message: "No terminals available for this plant",
+            severity: "warning",
+          });
+        }
+      } else {
+        throw new Error(response.message || "Invalid response format");
+      }
+    } catch (error) {
+      console.error("Error fetching terminals:", error);
+      setSnackbar({
+        open: true,
+        message: `Error fetching terminals: ${error.message}`,
+        severity: "error",
+      });
+    } finally {
+      setLoading((prev) => ({ ...prev, terminals: false }));
+    }
+  };
+
+  // Fetch measurands when terminal changes
+  const fetchMeasurands = async (plantId, terminalId) => {
+    if (!plantId || !terminalId) return;
+
+    setLoading((prev) => ({ ...prev, measurands: true }));
+    try {
+      // For Terminal view, fetch measurands with Terminal type filter
+      const response = await getMeasurands(plantId, terminalId, "Terminal");
+      console.log("fetchMeasurands response:", response); // Debug log
+      if (response.status === "success" && Array.isArray(response.data)) {
+        const mappedMeasurands = response.data.map((measurand) => ({
+          id: measurand.MeasurandId,
+          name: measurand.MeasurandName,
+          unit: measurand.Unit,
+        }));
+        console.log("Mapped measurands:", mappedMeasurands); // Debug log
+        setMeasurandOptions(mappedMeasurands);
+        if (mappedMeasurands.length === 0) {
+          setSnackbar({
+            open: true,
+            message: "No measurands available for this terminal",
+            severity: "warning",
+          });
+        }
+      } else {
+        throw new Error(response.message || "Invalid response format");
+      }
+    } catch (error) {
+      console.error("Error fetching measurands:", error);
+      setSnackbar({
+        open: true,
+        message: `Error fetching measurands: ${error.message}`,
+        severity: "error",
+      });
+    } finally {
+      setLoading((prev) => ({ ...prev, measurands: false }));
+    }
+  };
+
+  // Handle plant selection
+  const handlePlantChange = (plantId) => {
+    setPlant(plantId);
+    setTerminal("");
+    setMeasurands([]);
+    setTerminals([]);
+    setMeasurandOptions([]);
+    if (plantId) {
+      fetchTerminals(plantId);
+    }
+  };
+
+  // Handle terminal selection
+  const handleTerminalChange = (terminalId) => {
+    setTerminal(terminalId);
+    setMeasurands([]);
+    setMeasurandOptions([]);
+    if (terminalId && plant) {
+      fetchMeasurands(plant, terminalId);
+    }
+  };
+
+  // Real data fetch function (replace mock data)
+  const fetchLatestData = async (terminalId, measurandId) => {
+    try {
+      const response = await getLiveMeasurandValue(terminalId, measurandId);
+      console.log("API Response:", response); // Debug log
+      if (response.status === "success") {
+        console.log("Timestamp from API:", response.data.TimeStamp); // Debug log
+        return {
+          value: response.data.MeasurandValue,
+          timestamp: response.data.TimeStamp, // Return the full timestamp
+          unit: response.data.Unit,
+        };
+      } else {
+        throw new Error("Failed to fetch data");
+      }
+    } catch (error) {
+      console.error("Error fetching latest data:", error);
+      // Return error state instead of mock data
+      return {
+        value: "Error",
+        timestamp: new Date().toISOString(),
+      };
+    }
   };
 
   useEffect(() => {
@@ -130,43 +288,53 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
 
   useEffect(() => {
     const interval = setInterval(async () => {
+      const currentWidgets = widgetsRef.current;
+      if (currentWidgets.length === 0) return;
+
       const updatedWidgets = await Promise.all(
-        widgets.map(async (widget) => {
-          const latestData = await fetchLatestData(
-            widget.terminal,
-            widget.measurand
-          );
-          if (widget.type === "Number") {
-            return {
-              ...widget,
-              data: {
-                value: latestData.value,
-                timestamp: latestData.timestamp,
-              },
-            };
-          } else if (widget.type === "Graph") {
-            const newDataPoint = {
-              time: latestData.timestamp,
-              value: parseFloat(latestData.value),
-              isLatest: true,
-            };
-            const newData = [...widget.data, newDataPoint];
-            if (newData.length > 1) {
-              newData[newData.length - 2].isLatest = false;
+        currentWidgets.map(async (widget) => {
+          try {
+            const latestData = await fetchLatestData(
+              widget.terminal,
+              widget.measurandId
+            );
+            if (widget.type === "Number") {
+              return {
+                ...widget,
+                unit: latestData.unit || widget.unit,
+                data: {
+                  value: latestData.value,
+                  timestamp: latestData.timestamp,
+                },
+              };
+            } else if (widget.type === "Graph") {
+              const newDataPoint = {
+                time: latestData.timestamp,
+                value: parseFloat(latestData.value),
+                isLatest: true,
+              };
+              const newData = [...widget.data, newDataPoint];
+              if (newData.length > 1) {
+                newData[newData.length - 2].isLatest = false;
+              }
+              if (newData.length > 900) {
+                return { ...widget, data: newData.slice(-900) };
+              }
+              return { ...widget, data: newData };
             }
-            if (newData.length > 900) {
-              return { ...widget, data: newData.slice(-900) };
-            }
-            return { ...widget, data: newData };
+            return widget;
+          } catch (error) {
+            console.error(`Error updating widget ${widget.id}:`, error);
+            // Return widget unchanged if there's an error
+            return widget;
           }
-          return widget;
         })
       );
       setWidgets(updatedWidgets);
-    }, 3000);
+    }, 10000); // Poll every 10 seconds for live updates
 
     return () => clearInterval(interval);
-  }, [widgets]);
+  }, []); // Empty dependency array to prevent infinite loops
 
   const handleCreateWidgets = () => {
     if (!plant) {
@@ -196,24 +364,26 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
 
     setSelectedViewId("");
     setIsUpdating(false);
-    const newWidgets = measurands.map((measurand, index) => ({
-      id: `${terminal}-${measurand}-${Date.now()}-${index}`,
-      type: widgetType,
-      terminal,
-      measurand,
-      data:
-        widgetType === "Number"
-          ? {
-              value: (Math.random() * 100).toFixed(2),
-              timestamp: new Date().toLocaleString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: true,
-              }),
-            }
-          : [],
-    }));
+    const newWidgets = measurands.map((measurandId, index) => {
+      const measurandOption = measurandOptions.find(
+        (m) => m.id === measurandId
+      );
+      return {
+        id: `${terminal}-${measurandId}-${Date.now()}-${index}`,
+        type: widgetType,
+        terminal,
+        measurandId,
+        measurandName: measurandOption?.name || `Measurand ${measurandId}`,
+        unit: measurandOption?.unit || "",
+        data:
+          widgetType === "Number"
+            ? {
+                value: "Loading...",
+                timestamp: new Date().toISOString(),
+              }
+            : [],
+      };
+    });
     setWidgets(newWidgets);
 
     const maxCols = 12;
@@ -407,24 +577,26 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
     setMeasurands(view.measurands);
     setIsUpdating(false);
 
-    const newWidgets = view.measurands.map((measurand, index) => ({
-      id: `${view.terminal}-${measurand}-${Date.now()}-${index}`,
-      type: view.widgetType,
-      terminal: view.terminal,
-      measurand,
-      data:
-        view.widgetType === "Number"
-          ? {
-              value: (Math.random() * 100).toFixed(2),
-              timestamp: new Date().toLocaleString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: true,
-              }),
-            }
-          : [],
-    }));
+    const newWidgets = view.measurands.map((measurandId, index) => {
+      const measurandOption = measurandOptions.find(
+        (m) => m.id === measurandId
+      );
+      return {
+        id: `${view.terminal}-${measurandId}-${Date.now()}-${index}`,
+        type: view.widgetType,
+        terminal: view.terminal,
+        measurandId,
+        measurandName: measurandOption?.name || `Measurand ${measurandId}`,
+        unit: measurandOption?.unit || "",
+        data:
+          view.widgetType === "Number"
+            ? {
+                value: "Loading...",
+                timestamp: new Date().toISOString(),
+              }
+            : [],
+      };
+    });
 
     setWidgets(newWidgets);
 
@@ -627,22 +799,33 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
             <Select
               value={plant}
               onChange={(e) => {
-                setPlant(e.target.value);
-                setTerminal("");
-                setMeasurands([]);
+                handlePlantChange(e.target.value);
               }}
               label="Plant label"
               sx={{ height: "40px" }}
+              disabled={loading.plants}
             >
-              {plants.map((p) => (
-                <MenuItem key={p} value={p}>
-                  {p}
+              {loading.plants ? (
+                <MenuItem disabled>
+                  <CircularProgress size={20} sx={{ mr: 1 }} />
+                  Loading plants...
                 </MenuItem>
-              ))}
+              ) : plants.length === 0 ? (
+                <MenuItem disabled>No plants available</MenuItem>
+              ) : (
+                plants.map((p) => (
+                  <MenuItem key={p.id} value={p.id}>
+                    {p.name}
+                  </MenuItem>
+                ))
+              )}
             </Select>
           </FormControl>
 
-          <FormControl sx={{ width: selectWidth }} disabled={!plant}>
+          <FormControl
+            sx={{ width: selectWidth }}
+            disabled={!plant || loading.terminals}
+          >
             <InputLabel>
               <Power
                 sx={{ color: "#FFD700", verticalAlign: "middle", mr: 1 }}
@@ -652,21 +835,32 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
             <Select
               value={terminal}
               onChange={(e) => {
-                setTerminal(e.target.value);
-                setMeasurands([]);
+                handleTerminalChange(e.target.value);
               }}
               label="Terminal label"
               sx={{ height: "40px" }}
             >
-              {terminals.map((t) => (
-                <MenuItem key={t} value={t}>
-                  {t}
+              {loading.terminals ? (
+                <MenuItem disabled>
+                  <CircularProgress size={20} sx={{ mr: 1 }} />
+                  Loading terminals...
                 </MenuItem>
-              ))}
+              ) : terminals.length === 0 ? (
+                <MenuItem disabled>No terminals available</MenuItem>
+              ) : (
+                terminals.map((t) => (
+                  <MenuItem key={t.id} value={t.id}>
+                    {t.name}
+                  </MenuItem>
+                ))
+              )}
             </Select>
           </FormControl>
 
-          <FormControl sx={{ width: selectWidth }} disabled={!terminal}>
+          <FormControl
+            sx={{ width: selectWidth }}
+            disabled={!terminal || loading.measurands}
+          >
             <InputLabel>
               <Assessment
                 sx={{ color: "#00CED1", verticalAlign: "middle", mr: 1 }}
@@ -681,25 +875,40 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
               renderValue={(selected) => `${selected.length} selected`}
               sx={{ height: "40px" }}
             >
-              <MenuItem>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={measurands.length === measurandOptions.length}
-                      onChange={(e) =>
-                        setMeasurands(e.target.checked ? measurandOptions : [])
-                      }
-                    />
-                  }
-                  label="Select All"
-                />
-              </MenuItem>
-              {measurandOptions.map((m) => (
-                <MenuItem key={m} value={m}>
-                  <Checkbox checked={measurands.includes(m)} />
-                  <Typography>{m}</Typography>
+              {loading.measurands ? (
+                <MenuItem disabled>
+                  <CircularProgress size={20} sx={{ mr: 1 }} />
+                  Loading measurands...
                 </MenuItem>
-              ))}
+              ) : measurandOptions.length === 0 ? (
+                <MenuItem disabled>No measurands available</MenuItem>
+              ) : (
+                <MenuItem>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={measurands.length === measurandOptions.length}
+                        onChange={(e) =>
+                          setMeasurands(
+                            e.target.checked
+                              ? measurandOptions.map((m) => m.id)
+                              : []
+                          )
+                        }
+                      />
+                    }
+                    label="Select All"
+                  />
+                </MenuItem>
+              )}
+              {!loading.measurands &&
+                measurandOptions.length > 0 &&
+                measurandOptions.map((m) => (
+                  <MenuItem key={m.id} value={m.id}>
+                    <Checkbox checked={measurands.includes(m.id)} />
+                    <Typography>{m.name}</Typography>
+                  </MenuItem>
+                ))}
             </Select>
           </FormControl>
 
@@ -916,12 +1125,7 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
             variant="body2"
             sx={{
               fontWeight: 500,
-              color: (theme) =>
-                theme.palette.mode === "light" ? "#10B981" : "#22C55E",
-              background: (theme) =>
-                theme.palette.mode === "light"
-                  ? "linear-gradient(45deg, #DCFCE7, #F0FDF4)"
-                  : "linear-gradient(45deg, #064E3B, #14532D)",
+
               px: 1.5,
               py: 0.5,
               borderRadius: 1,
@@ -929,18 +1133,13 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
               "&:hover": { transform: "scale(1.05)" },
             }}
           >
-            Plant: {plant || "None"}
+            Plant: {plants.find((p) => p.id === plant)?.name || "None"}
           </Typography>
           <Typography
             variant="body2"
             sx={{
               fontWeight: 500,
-              color: (theme) =>
-                theme.palette.mode === "light" ? "#10B981" : "#22C55E",
-              background: (theme) =>
-                theme.palette.mode === "light"
-                  ? "linear-gradient(45deg, #DCFCE7, #F0FDF4)"
-                  : "linear-gradient(45deg, #064E3B, #14532D)",
+
               px: 1.5,
               py: 0.5,
               borderRadius: 1,
@@ -948,7 +1147,7 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
               "&:hover": { transform: "scale(1.05)" },
             }}
           >
-            Terminal: {terminal || "None"}
+            Terminal: {terminals.find((t) => t.id === terminal)?.name || "None"}
           </Typography>
 
           <Tooltip
@@ -959,15 +1158,13 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
                     variant="body2"
                     sx={{
                       fontWeight: 600,
-                      color: (theme) =>
-                        theme.palette.mode === "light" ? "#10B981" : "#22C55E",
                     }}
                   >
                     Selected Measurands:
                   </Typography>
-                  {measurands.map((script) => (
+                  {measurands.map((measurand) => (
                     <Typography
-                      key={script}
+                      key={measurand}
                       variant="body2"
                       sx={{
                         color: (theme) =>
@@ -976,7 +1173,9 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
                             : "#22C55E",
                       }}
                     >
-                      - {script}
+                      -{" "}
+                      {measurandOptions.find((m) => m.id === measurand)?.name ||
+                        measurand}
                     </Typography>
                   ))}
                 </Box>
@@ -1008,12 +1207,7 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
               variant="body2"
               sx={{
                 fontWeight: 500,
-                color: (theme) =>
-                  theme.palette.mode === "light" ? "#10B981" : "#22C55E",
-                background: (theme) =>
-                  theme.palette.mode === "light"
-                    ? "linear-gradient(45deg, #DCFCE7, #F0FDF4)"
-                    : "linear-gradient(45deg, #064E3B, #14532D)",
+
                 px: 1.5,
                 py: 0.5,
                 borderRadius: 1,
@@ -1052,8 +1246,6 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
               variant="body2"
               sx={{
                 fontWeight: 500,
-                color: (theme) =>
-                  theme.palette.mode === "light" ? "#10B981" : "#22C55E",
               }}
             >
               Type: {widgetType} View
@@ -1063,12 +1255,7 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
             variant="body2"
             sx={{
               fontWeight: 500,
-              color: (theme) =>
-                theme.palette.mode === "light" ? "#10B981" : "#22C55E",
-              background: (theme) =>
-                theme.palette.mode === "light"
-                  ? "linear-gradient(45deg, #DCFCE7, #F0FDF4)"
-                  : "linear-gradient(45deg, #064E3B, #14532D)",
+
               px: 1.5,
               py: 0.5,
               borderRadius: 1,
@@ -1123,7 +1310,7 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              height: "400px",
+
               gap: 2,
             }}
           >
@@ -1157,6 +1344,7 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
               to monitor, and click "Go" to create your custom view.
               <br />
               <Typography
+                component="span"
                 variant="body1"
                 sx={{
                   textAlign: "center",
@@ -1183,8 +1371,6 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
             isDraggable={!isLocked}
             isResizable={!isLocked}
             compactType="vertical"
-            margin={[10, 10]}
-            containerPadding={[15, 15]}
             preventCollision={false}
             onDragStop={(layout, oldItem, newItem) => {
               const maxCols = 12;
@@ -1192,26 +1378,24 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
               if (newItem.x + newItem.w > maxCols)
                 newItem.x = maxCols - newItem.w;
             }}
-            style={{
-              width: "100%",
-              padding: "15px",
-            }}
+            style={{}}
           >
             {widgets.map((widget) => (
               <div key={widget.id}>
                 {widget.type === "Number" ? (
                   <NumberWidget
                     terminal={widget.terminal}
-                    measurand={widget.measurand}
+                    measurand={widget.measurandName}
                     value={widget.data.value}
                     timestamp={widget.data.timestamp}
                     widgetId={widget.id}
                     onDelete={handleDeleteWidget}
+                    unit={widget.unit}
                   />
                 ) : (
                   <GraphWidget
                     terminal={widget.terminal}
-                    measurand={widget.measurand}
+                    measurand={widget.measurandName}
                     data={widget.data}
                     widgetId={widget.id}
                     onDelete={handleDeleteWidget}
@@ -1241,4 +1425,4 @@ const CurrentDataDisplay = ({ saveView, savedViews, deleteView }) => {
   );
 };
 
-export default CurrentDataDisplay;
+export default CurrentDataDisplayTV;

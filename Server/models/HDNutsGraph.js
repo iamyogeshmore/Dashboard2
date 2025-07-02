@@ -5,7 +5,7 @@ const MeasurandSchema = new Schema(
   {
     MeasurandId: Number,
     MeasurandName: String,
-    MeasurandValue: Number,
+    MeasurandValue: mongoose.Schema.Types.Mixed,
   },
   { _id: false }
 );
@@ -15,13 +15,14 @@ const HDNutsGraphSchema = new Schema(
     TerminalId: Number,
     TerminalName: String,
     TimeStamp: Date,
-    TimeStampId: Number,
+    TimeStampId: mongoose.Schema.Types.Mixed,
+    DebugLogTime: String,
     MeasurandData: [MeasurandSchema],
     DocNo: Number,
   },
   {
     collection: "HDNutsGraph",
-    timestamps: false,
+    versionKey: false,
   }
 );
 

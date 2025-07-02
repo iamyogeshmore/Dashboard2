@@ -33,6 +33,10 @@ const AddTableDialog = ({
   plants,
   terminals,
   measurand,
+  loading = {},
+  error = {},
+  fetchTerminals,
+  fetchMeasurands,
 }) => {
   const { mode } = useThemeContext();
   const theme = useTheme();
@@ -73,6 +77,19 @@ const AddTableDialog = ({
         formData.measurand.length > 0
     );
   }, [formData]);
+
+  // Add useEffect to fetch terminals and measurands when plant/terminal changes
+  useEffect(() => {
+    if (formData.plant) {
+      fetchTerminals && fetchTerminals(formData.plant);
+    }
+  }, [formData.plant]);
+
+  useEffect(() => {
+    if (formData.plant && formData.terminal) {
+      fetchMeasurands && fetchMeasurands(formData.plant, formData.terminal);
+    }
+  }, [formData.plant, formData.terminal]);
 
   const handleSubmit = async () => {
     if (!formData.profile) {
@@ -358,6 +375,8 @@ const AddTableDialog = ({
             plants={plants}
             terminals={terminals}
             measurand={measurand}
+            loading={loading}
+            error={error}
             setSnackbar={setSnackbar}
           />
         </DialogContent>

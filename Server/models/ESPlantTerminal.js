@@ -17,7 +17,7 @@ const ESPlantTerminalSchema = new mongoose.Schema(
     TerminalName: String,
     TimeStamp: Date,
     TimeStampId: mongoose.Schema.Types.Mixed,
-    MeasurandDetails: {
+    MeasurandData: {
       type: Map,
       of: MeasurandDetailSchema,
     },

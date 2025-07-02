@@ -910,12 +910,7 @@ const CurrentDataDisplayMV = ({ saveView, savedViews, deleteView }) => {
             variant="body2"
             sx={{
               fontWeight: 500,
-              color: (theme) =>
-                theme.palette.mode === "light" ? "#10B981" : "#22C55E",
-              background: (theme) =>
-                theme.palette.mode === "light"
-                  ? "linear-gradient(45deg, #DCFCE7, #F0FDF4)"
-                  : "linear-gradient(45deg, #064E3B, #14532D)",
+
               px: 1.5,
               py: 0.5,
               borderRadius: 1,
@@ -929,12 +924,7 @@ const CurrentDataDisplayMV = ({ saveView, savedViews, deleteView }) => {
             variant="body2"
             sx={{
               fontWeight: 500,
-              color: (theme) =>
-                theme.palette.mode === "light" ? "#10B981" : "#22C55E",
-              background: (theme) =>
-                theme.palette.mode === "light"
-                  ? "linear-gradient(45deg, #DCFCE7, #F0FDF4)"
-                  : "linear-gradient(45deg, #064E3B, #14532D)",
+
               px: 1.5,
               py: 0.5,
               borderRadius: 1,
@@ -1002,12 +992,7 @@ const CurrentDataDisplayMV = ({ saveView, savedViews, deleteView }) => {
               variant="body2"
               sx={{
                 fontWeight: 500,
-                color: (theme) =>
-                  theme.palette.mode === "light" ? "#10B981" : "#22C55E",
-                background: (theme) =>
-                  theme.palette.mode === "light"
-                    ? "linear-gradient(45deg, #DCFCE7, #F0FDF4)"
-                    : "linear-gradient(45deg, #064E3B, #14532D)",
+
                 px: 1.5,
                 py: 0.5,
                 borderRadius: 1,
@@ -1031,10 +1016,7 @@ const CurrentDataDisplayMV = ({ saveView, savedViews, deleteView }) => {
               display: "flex",
               alignItems: "center",
               gap: 0.5,
-              background: (theme) =>
-                theme.palette.mode === "light"
-                  ? "linear-gradient(45deg, #DCFCE7, #F0FDF4)"
-                  : "linear-gradient(45deg, #064E3B, #14532D)",
+
               px: 1.5,
               py: 0.5,
               borderRadius: 1,
@@ -1046,8 +1028,6 @@ const CurrentDataDisplayMV = ({ saveView, savedViews, deleteView }) => {
               variant="body2"
               sx={{
                 fontWeight: 500,
-                color: (theme) =>
-                  theme.palette.mode === "light" ? "#10B981" : "#22C55E",
               }}
             >
               Type: {widgetType} View
@@ -1057,12 +1037,7 @@ const CurrentDataDisplayMV = ({ saveView, savedViews, deleteView }) => {
             variant="body2"
             sx={{
               fontWeight: 500,
-              color: (theme) =>
-                theme.palette.mode === "light" ? "#10B981" : "#22C55E",
-              background: (theme) =>
-                theme.palette.mode === "light"
-                  ? "linear-gradient(45deg, #DCFCE7, #F0FDF4)"
-                  : "linear-gradient(45deg, #064E3B, #14532D)",
+
               px: 1.5,
               py: 0.5,
               borderRadius: 1,
@@ -1077,11 +1052,7 @@ const CurrentDataDisplayMV = ({ saveView, savedViews, deleteView }) => {
               variant="body2"
               sx={{
                 fontWeight: 600,
-                color: "#4CAF50",
-                background: (theme) =>
-                  theme.palette.mode === "light"
-                    ? "linear-gradient(45deg, #DBEAFE, #F0F9FF)"
-                    : "linear-gradient(45deg, #064E3B, #14532D)",
+
                 px: 1.5,
                 py: 0.5,
                 borderRadius: 1,
@@ -1185,10 +1156,6 @@ const CurrentDataDisplayMV = ({ saveView, savedViews, deleteView }) => {
               if (newItem.x < 0) newItem.x = 0;
               if (newItem.x + newItem.w > maxCols)
                 newItem.x = maxCols - newItem.w;
-            }}
-            style={{
-              width: "100%",
-              padding: "15px",
             }}
           >
             {widgets.map((widget) => (

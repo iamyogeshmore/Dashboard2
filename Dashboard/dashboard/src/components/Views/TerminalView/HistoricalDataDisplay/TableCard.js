@@ -33,7 +33,7 @@ const TableCard = ({ table, onDelete }) => {
   const gradients = getGradients();
 
   const handleClick = () => {
-    navigate(`/views/terminal/historical/${table.id}`);
+    navigate(`/views/terminal/historical/${table._id || table.id}`);
   };
 
   return (
@@ -118,7 +118,7 @@ const TableCard = ({ table, onDelete }) => {
             }}
             onClick={handleClick}
           >
-            {table.name || table.terminal} {/* Display table name */}
+            {table.name || table.terminalDisplayName || table.terminal} {/* Display table name or terminal display name */}
             <Chip
               label={table.profile}
               size="small"
@@ -130,7 +130,7 @@ const TableCard = ({ table, onDelete }) => {
             />
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-            <strong>Plant:</strong> {table.plant}
+            <strong>Plant:</strong> {table.plantDisplayName || table.plant}
           </Typography>
           <Typography
             variant="body2"
@@ -138,18 +138,46 @@ const TableCard = ({ table, onDelete }) => {
             sx={{ mb: 1, display: "flex", flexWrap: "wrap", gap: 0.5 }}
           >
             <strong>Measurand:</strong>
-            {table.measurand.map((measurand) => (
-              <Chip
-                key={measurand}
-                label={measurand}
-                size="small"
-                variant="outlined"
-                sx={{
-                  borderColor: mode === "light" ? "#10B981" : "#22C55E",
-                  color: mode === "light" ? "#10B981" : "#22C55E",
-                }}
-              />
-            ))}
+            {Array.isArray(table.measurandDisplayNames)
+              ? table.measurandDisplayNames.map((measurand) => (
+                  <Chip
+                    key={measurand}
+                    label={measurand}
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      borderColor: mode === "light" ? "#10B981" : "#22C55E",
+                      color: mode === "light" ? "#10B981" : "#22C55E",
+                    }}
+                  />
+                ))
+              : Array.isArray(table.measurand)
+              ? table.measurand.map((measurand) => (
+                  <Chip
+                    key={measurand}
+                    label={measurand}
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      borderColor: mode === "light" ? "#10B981" : "#22C55E",
+                      color: mode === "light" ? "#10B981" : "#22C55E",
+                    }}
+                  />
+                ))
+              : Array.isArray(table.measurandIds)
+              ? table.measurandIds.map((id) => (
+                  <Chip
+                    key={id}
+                    label={id}
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      borderColor: mode === "light" ? "#10B981" : "#22C55E",
+                      color: mode === "light" ? "#10B981" : "#22C55E",
+                    }}
+                  />
+                ))
+              : null}
           </Typography>
           <Typography
             variant="caption"
