@@ -266,6 +266,95 @@ export const getHistoricalTableById = async (id) => {
   return await apiCall(`/historical-tables/${id}`);
 };
 
+// TerminalView API
+export const createTerminalView = async (view) => {
+  return await apiCall('/terminal-views', {
+    method: 'POST',
+    body: JSON.stringify(view),
+  });
+};
+
+export const getTerminalViews = async () => {
+  return await apiCall('/terminal-views');
+};
+
+export const deleteTerminalView = async (id) => {
+  return await apiCall(`/terminal-views/${id}`, { method: 'DELETE' });
+};
+
+export const getTerminalViewById = async (id) => {
+  return await apiCall(`/terminal-views/${id}`);
+};
+
+export const updateTerminalView = async (id, view) => {
+  return await apiCall(`/terminal-views/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(view),
+  });
+};
+
+// DASHBOARD CRUD
+export const createDashboard = async (dashboard) => {
+  return await apiCall('/dashboards', {
+    method: 'POST',
+    body: JSON.stringify(dashboard),
+  });
+};
+
+export const getDashboards = async () => {
+  return await apiCall('/dashboards');
+};
+
+export const getDashboardById = async (id) => {
+  return await apiCall(`/dashboards/${id}`);
+};
+
+export const updateDashboard = async (id, dashboard) => {
+  return await apiCall(`/dashboards/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(dashboard),
+  });
+};
+
+export const deleteDashboard = async (id) => {
+  return await apiCall(`/dashboards/${id}`, { method: 'DELETE' });
+};
+
+export const publishDashboard = async (id) => {
+  return await apiCall(`/dashboards/${id}/publish`, { method: 'PUT' });
+};
+
+// Widget Template CRUD
+export const createWidgetTemplate = async ({ name, data }) => {
+  return await apiCall('/widget-templates', {
+    method: 'POST',
+    body: JSON.stringify({ name, data }),
+  });
+};
+
+export const getWidgetTemplates = async () => {
+  return await apiCall('/widget-templates');
+};
+
+export const getWidgetTemplateById = async (id) => {
+  return await apiCall(`/widget-templates/${id}`);
+};
+
+export const updateWidgetTemplate = async (id, { name, data }) => {
+  return await apiCall(`/widget-templates/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ name, data }),
+  });
+};
+
+export const deleteWidgetTemplate = async (id) => {
+  return await apiCall(`/widget-templates/${id}`, { method: 'DELETE' });
+};
+
+export const listDashboards = async () => {
+  return await apiCall('/dashboards/list');
+};
+
 export default {
   getPlants,
   getTerminals,
@@ -278,4 +367,21 @@ export default {
   deleteHistoricalTable,
   getHDNutsMeasurandValue,
   getHistoricalTableById,
+  createTerminalView,
+  getTerminalViews,
+  deleteTerminalView,
+  getTerminalViewById,
+  updateTerminalView,
+  createDashboard,
+  getDashboards,
+  getDashboardById,
+  updateDashboard,
+  deleteDashboard,
+  publishDashboard,
+  createWidgetTemplate,
+  getWidgetTemplates,
+  getWidgetTemplateById,
+  updateWidgetTemplate,
+  deleteWidgetTemplate,
+  listDashboards,
 };

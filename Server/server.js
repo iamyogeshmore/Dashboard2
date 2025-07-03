@@ -9,7 +9,10 @@ const esPlantTerminalRoutes = require("./routes/esPlantTerminalRoutes");
 const hdNutsGraphRoutes = require("./routes/hdNutsGraphRoutes");
 const logRoutes = require("./routes/logRoutes");
 const esHistoricalTableRoutes = require('./routes/ESHistoricalTableRoutes');
+const terminalViewRoutes = require('./routes/TerminalViewRoutes');
 const http = require("http");
+const dashboardRoutes = require('./routes/DashboardRoutes');
+const widgetTemplateRoutes = require('./routes/widgetTemplateRoutes');
 
 // ----------------------- Load environment variables from .env file -----------------------
 dotenv.config();
@@ -54,6 +57,9 @@ app.use("/api/history", hdNutsGraphRoutes);
 app.use("/api/hdnuts", hdNutsGraphRoutes);
 app.use("/api/logs", logRoutes);
 app.use('/api/historical-tables', esHistoricalTableRoutes);
+app.use('/api/terminal-views', terminalViewRoutes);
+app.use('/api/dashboards', dashboardRoutes);
+app.use('/api/widget-templates', widgetTemplateRoutes);
 
 // ----------------------- Handle 404 for undefined routes -----------------------
 app.use((req, res) => {

@@ -32,6 +32,12 @@ import { useForm, Controller } from "react-hook-form";
 import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { ChromePicker } from "react-color";
+import {
+  createWidgetTemplate,
+  getWidgetTemplates,
+  updateWidgetTemplate,
+  deleteWidgetTemplate,
+} from '../../services/apiService';
 
 const fontFamilies = [
   "Roboto",
@@ -90,20 +96,18 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
   const colorPickerRef = useRef(null);
 
   useEffect(() => {
-    // Load templates from localStorage
-    const savedTemplates = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key.startsWith("widget_template_")) {
-        const templateData = JSON.parse(localStorage.getItem(key));
-        savedTemplates.push({
-          id: key,
-          name: templateData.name,
-          data: templateData.data,
-        });
+    // Load templates from backend
+    const fetchTemplates = async () => {
+      try {
+        const res = await getWidgetTemplates();
+        if (res.status === 'success') {
+          setTemplates(res.data.map(t => ({ id: t._id, name: t.name, data: t.data })));
+        }
+      } catch (err) {
+        setTemplates([]);
       }
-    }
-    setTemplates(savedTemplates);
+    };
+    fetchTemplates();
   }, []);
 
   useEffect(() => {
@@ -236,45 +240,39 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
     }
   };
 
-  const handleSaveTemplate = () => {
-    if (!templateName) {
-      return;
-    }
-    const templateId = `widget_template_${Date.now()}`;
+  const handleSaveTemplate = async () => {
+    if (!templateName) return;
     const data = watch();
-    const templateData = { name: templateName, data };
-    localStorage.setItem(templateId, JSON.stringify(templateData));
-    setTemplates((prev) => [
-      ...prev,
-      { id: templateId, name: templateName, data },
-    ]);
-    setSelectedTemplate(templateId);
+    try {
+      const res = await createWidgetTemplate({ name: templateName, data });
+      if (res.status === 'success') {
+        setTemplates(prev => [...prev, { id: res.data._id, name: res.data.name, data: res.data.data }]);
+        setSelectedTemplate(res.data._id);
+      }
+    } catch (err) {}
     setTemplateName("");
     setSaveAnchorEl(null);
   };
 
-  const handleUpdateTemplate = () => {
-    if (!selectedTemplate) {
-      return;
-    }
+  const handleUpdateTemplate = async () => {
+    if (!selectedTemplate) return;
     const data = watch();
-    const templateData = {
-      name: templates.find((t) => t.id === selectedTemplate).name,
-      data,
-    };
-    localStorage.setItem(selectedTemplate, JSON.stringify(templateData));
-    setTemplates((prev) =>
-      prev.map((t) => (t.id === selectedTemplate ? { ...t, data } : t))
-    );
+    try {
+      const template = templates.find(t => t.id === selectedTemplate);
+      const res = await updateWidgetTemplate(selectedTemplate, { name: template.name, data });
+      if (res.status === 'success') {
+        setTemplates(prev => prev.map(t => t.id === selectedTemplate ? { ...t, data } : t));
+      }
+    } catch (err) {}
   };
 
-  const handleDeleteTemplate = () => {
-    if (!selectedTemplate) {
-      return;
-    }
-    localStorage.removeItem(selectedTemplate);
-    setTemplates((prev) => prev.filter((t) => t.id !== selectedTemplate));
-    setSelectedTemplate("");
+  const handleDeleteTemplate = async () => {
+    if (!selectedTemplate) return;
+    try {
+      await deleteWidgetTemplate(selectedTemplate);
+      setTemplates(prev => prev.filter(t => t.id !== selectedTemplate));
+      setSelectedTemplate("");
+    } catch (err) {}
   };
 
   const fields = {

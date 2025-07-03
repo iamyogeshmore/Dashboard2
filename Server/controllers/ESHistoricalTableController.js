@@ -1,4 +1,4 @@
-const ESHistoricalTable = require("../models/ESHistoricalTable");
+const ESHistoricalTable = require("../models/TerminalHDDView");
 const ESPlant = require("../models/ESPlant");
 
 exports.createTable = async (req, res) => {

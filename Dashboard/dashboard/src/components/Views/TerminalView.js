@@ -7,6 +7,11 @@ import CurrentDataDisplay from "./TerminalView/CurrentDataDisplayTV";
 import HistoricalDataDisplay from "./TerminalView/HistoricalDataDisplayTV";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useLocation } from "react-router-dom";
+import {
+  getTerminalViews,
+  createTerminalView,
+  deleteTerminalView as apiDeleteTerminalView,
+} from '../../services/apiService';
 
 const TerminalView = () => {
   const { mode } = useThemeContext();
@@ -15,10 +20,18 @@ const TerminalView = () => {
   const [savedViews, setSavedViews] = useState([]);
 
   useEffect(() => {
-    const storedViews = localStorage.getItem("terminalSavedViews");
-    if (storedViews) {
-      setSavedViews(JSON.parse(storedViews));
-    }
+    // Fetch views from backend
+    const fetchViews = async () => {
+      try {
+        const response = await getTerminalViews();
+        if (response.status === 'success') {
+          setSavedViews(response.data);
+        }
+      } catch (err) {
+        setSavedViews([]);
+      }
+    };
+    fetchViews();
   }, []);
 
   useEffect(() => {
@@ -31,16 +44,24 @@ const TerminalView = () => {
     setTabValue(newValue);
   };
 
-  const saveView = (view) => {
-    const updatedViews = [...savedViews, view];
-    setSavedViews(updatedViews);
-    localStorage.setItem("terminalSavedViews", JSON.stringify(updatedViews));
+  const saveView = async (view) => {
+    try {
+      const response = await createTerminalView(view);
+      if (response.status === 'success') {
+        setSavedViews((prev) => [response.data, ...prev]);
+      }
+    } catch (err) {
+      // handle error
+    }
   };
 
-  const deleteView = (viewId) => {
-    const updatedViews = savedViews.filter((view) => view.id !== viewId);
-    setSavedViews(updatedViews);
-    localStorage.setItem("terminalSavedViews", JSON.stringify(updatedViews));
+  const deleteView = async (viewId) => {
+    try {
+      await apiDeleteTerminalView(viewId);
+      setSavedViews((prev) => prev.filter((view) => view._id !== viewId));
+    } catch (err) {
+      // handle error
+    }
   };
 
   const getTabGradients = () => ({

@@ -8,7 +8,7 @@ const esHistoricalTableSchema = new mongoose.Schema({
   measurandIds: [{ type: Number, required: true }],
   createdAt: { type: Date, default: Date.now },
 }, {
-  collection: 'ESHistoricalTable',
+  collection: 'TerminalHDDView',
 });
 
-module.exports = mongoose.model('ESHistoricalTable', esHistoricalTableSchema); 
+module.exports = mongoose.model('TerminalHDDView', esHistoricalTableSchema); 

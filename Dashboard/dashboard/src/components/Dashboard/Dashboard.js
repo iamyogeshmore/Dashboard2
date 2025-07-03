@@ -62,6 +62,14 @@ import {
 import ReactGridLayout from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
+import {
+  createDashboard,
+  getDashboards,
+  getDashboardById,
+  updateDashboard,
+  deleteDashboard as apiDeleteDashboard,
+  listDashboards,
+} from "../../services/apiService";
 
 const VALID_WIDGET_TYPES = [
   "text",
@@ -124,35 +132,38 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
 
   useEffect(() => {
     if (currentPath === "/") {
-      let publishedDashboard = null;
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key.startsWith("dashboard_")) {
-          const dashboardData = JSON.parse(localStorage.getItem(key));
-          if (dashboardData.isPublished) {
-            publishedDashboard = { id: key, ...dashboardData };
-            break;
+      // First, get the published dashboard's id
+      listDashboards()
+        .then((res) => {
+          if (res.status === "success" && Array.isArray(res.data)) {
+            const publishedDashboard = res.data.find(d => d.isPublished);
+            if (publishedDashboard) {
+              // Fetch the full dashboard by id
+              getDashboardById(publishedDashboard._id).then((response) => {
+                if (response.status === "success" && response.data) {
+                  setWidgets(response.data.widgets || []);
+                  setLayout(response.data.layout || []);
+                  setDashboardName(response.data.name || "");
+                  setIsDashboardSaved(true);
+                  setCurrentDashboardId(response.data._id);
+                  setIsPublished(true);
+                  setNoPublishedDashboard(false);
+                }
+              });
+            } else {
+              setWidgets([]);
+              setLayout([]);
+              setDashboardName("");
+              setIsDashboardSaved(false);
+              setCurrentDashboardId(null);
+              setIsPublished(false);
+              setNoPublishedDashboard(true);
+            }
           }
-        }
-      }
-
-      if (publishedDashboard) {
-        setWidgets(publishedDashboard.widgets || []);
-        setLayout(publishedDashboard.layout || []);
-        setDashboardName(publishedDashboard.name || "");
-        setIsDashboardSaved(true);
-        setCurrentDashboardId(publishedDashboard.id);
-        setIsPublished(true);
-        setNoPublishedDashboard(false);
-      } else {
-        setWidgets([]);
-        setLayout([]);
-        setDashboardName("");
-        setIsDashboardSaved(false);
-        setCurrentDashboardId(null);
-        setIsPublished(false);
-        setNoPublishedDashboard(true);
-      }
+        })
+        .catch(() => {
+          setNoPublishedDashboard(true);
+        });
     }
   }, [currentPath]);
 
@@ -273,74 +284,86 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
     return "";
   };
 
-  const handleSaveDashboard = () => {
+  const handleSaveDashboard = async () => {
     const error = validateDashboardName(dashboardName);
     if (error) {
       setNameError(error);
       showSnackbar(error, "error");
       return;
     }
-    const dashboardId = isDashboardSaved
-      ? currentDashboardId
-      : `dashboard_${Date.now()}`;
-    const dashboardData = { widgets, layout, name: dashboardName, isPublished };
-    localStorage.setItem(dashboardId, JSON.stringify(dashboardData));
-    console.log(
-      isDashboardSaved ? "Updating dashboard:" : "Saving dashboard:",
-      dashboardData
-    );
-    showSnackbar(
-      isDashboardSaved
-        ? "Dashboard updated successfully!"
-        : "Dashboard saved successfully!",
-      "success"
-    );
-    setIsDashboardSaved(true);
-    setCurrentDashboardId(dashboardId);
-    handleCloseSaveDialog();
-    onLoadDashboard.current(dashboardId);
-  };
-
-  const handlePublishDashboard = () => {
-    const dashboardId = isDashboardSaved
-      ? currentDashboardId
-      : `dashboard_${Date.now()}`;
-    const dashboardData = {
-      widgets,
-      layout,
-      name: dashboardName,
-      isPublished: true,
-    };
-
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key.startsWith("dashboard_") && key !== dashboardId) {
-        const otherDashboard = JSON.parse(localStorage.getItem(key));
-        otherDashboard.isPublished = false;
-        localStorage.setItem(key, JSON.stringify(otherDashboard));
+    const dashboardData = { widgets, layout, name: dashboardName, isPublished, patron };
+    try {
+      let response;
+      if (isDashboardSaved && currentDashboardId) {
+        response = await updateDashboard(currentDashboardId, dashboardData);
+      } else {
+        response = await createDashboard(dashboardData);
       }
+      if (response.status === "success") {
+        showSnackbar(
+          isDashboardSaved ? "Dashboard updated successfully!" : "Dashboard saved successfully!",
+          "success"
+        );
+        setIsDashboardSaved(true);
+        setCurrentDashboardId(response.data._id);
+        handleCloseSaveDialog();
+        if (onLoadDashboard) onLoadDashboard.current(response.data._id);
+      } else {
+        showSnackbar(response.message || "Failed to save dashboard", "error");
+      }
+    } catch (err) {
+      showSnackbar("Failed to save dashboard", "error");
     }
-
-    localStorage.setItem(dashboardId, JSON.stringify(dashboardData));
-    console.log("Publishing dashboard:", dashboardData);
-    setIsPublished(true);
-    setIsDashboardSaved(true);
-    setCurrentDashboardId(dashboardId);
-    showSnackbar("Dashboard published successfully!", "success");
-    onLoadDashboard.current(dashboardId);
   };
 
-  const handleLoadDashboard = (dashboardId) => {
-    const dashboardData = JSON.parse(localStorage.getItem(dashboardId));
-    if (dashboardData) {
-      setWidgets(dashboardData.widgets || []);
-      setLayout(dashboardData.layout || []);
-      setDashboardName(dashboardData.name || "");
-      setIsDashboardSaved(true);
-      setCurrentDashboardId(dashboardId);
-      setIsPublished(dashboardData.isPublished || false);
-      setNoPublishedDashboard(false);
-      showSnackbar(`Loaded dashboard: ${dashboardData.name}`, "success");
+  const handlePublishDashboard = async () => {
+    try {
+      // Unpublish all dashboards first
+      const allDashboards = await getDashboards();
+      if (allDashboards.status === "success" && Array.isArray(allDashboards.data)) {
+        await Promise.all(
+          allDashboards.data
+            .filter(d => d.isPublished)
+            .map(d => updateDashboard(d._id, { ...d, isPublished: false }))
+        );
+      }
+      // Publish current dashboard
+      const dashboardData = { widgets, layout, name: dashboardName, isPublished: true, patron };
+      let response;
+      if (isDashboardSaved && currentDashboardId) {
+        response = await updateDashboard(currentDashboardId, dashboardData);
+      } else {
+        response = await createDashboard(dashboardData);
+      }
+      if (response.status === "success") {
+        setIsPublished(true);
+        setIsDashboardSaved(true);
+        setCurrentDashboardId(response.data._id);
+        showSnackbar("Dashboard published successfully!", "success");
+        if (onLoadDashboard) onLoadDashboard.current(response.data._id);
+      } else {
+        showSnackbar(response.message || "Failed to publish dashboard", "error");
+      }
+    } catch (err) {
+      showSnackbar("Failed to publish dashboard", "error");
+    }
+  };
+
+  const handleLoadDashboard = async (dashboardId) => {
+    try {
+      const response = await getDashboardById(dashboardId);
+      if (response.status === "success" && response.data) {
+        setWidgets(response.data.widgets || []);
+        setLayout(response.data.layout || []);
+        setDashboardName(response.data.name || "");
+        setIsDashboardSaved(true);
+        setCurrentDashboardId(dashboardId);
+        setIsPublished(response.data.isPublished || false);
+        setNoPublishedDashboard(false);
+        showSnackbar(`Loaded dashboard: ${response.data.name}`, "success");
+      }
+    } catch (err) {
+      showSnackbar("Failed to load dashboard", "error");
     }
   };
 
@@ -479,6 +502,27 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
         })()}
       </Box>
     );
+  };
+
+  const handleDeleteDashboard = async () => {
+    if (!currentDashboardId) return;
+    try {
+      const response = await apiDeleteDashboard(currentDashboardId);
+      if (response.status === "success") {
+        setWidgets([]);
+        setLayout([]);
+        setDashboardName("");
+        setIsDashboardSaved(false);
+        setCurrentDashboardId(null);
+        setIsPublished(false);
+        setNoPublishedDashboard(true);
+        showSnackbar("Dashboard deleted successfully!", "success");
+      } else {
+        showSnackbar(response.message || "Failed to delete dashboard", "error");
+      }
+    } catch (err) {
+      showSnackbar("Failed to delete dashboard", "error");
+    }
   };
 
   return (

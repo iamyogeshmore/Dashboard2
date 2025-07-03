@@ -46,7 +46,9 @@ import {
   getTerminals,
   getMeasurands,
   getLiveMeasurandValue,
+  updateTerminalView,
 } from "../../../services/apiService";
+import isEqual from 'lodash/isEqual';
 
 const CurrentDataDisplayTV = ({ saveView, savedViews, deleteView }) => {
   const { mode } = useThemeContext();
@@ -95,6 +97,9 @@ const CurrentDataDisplayTV = ({ saveView, savedViews, deleteView }) => {
   useEffect(() => {
     widgetsRef.current = widgets;
   }, [widgets]);
+
+  // Track the loaded view for update detection
+  const [loadedView, setLoadedView] = useState(null);
 
   // Fetch plants on component mount
   useEffect(() => {
@@ -145,15 +150,14 @@ const CurrentDataDisplayTV = ({ saveView, savedViews, deleteView }) => {
 
     setLoading((prev) => ({ ...prev, terminals: true }));
     try {
-      // For Terminal view, fetch terminals with Terminal type filter
       const response = await getTerminals(plantId, "Terminal");
-      console.log("fetchTerminals response:", response); // Debug log
+      console.log("fetchTerminals response:", response); 
       if (response.status === "success" && Array.isArray(response.data)) {
         const mappedTerminals = response.data.map((terminal) => ({
           id: terminal.TerminalId,
           name: terminal.TerminalName,
         }));
-        console.log("Mapped terminals:", mappedTerminals); // Debug log
+        console.log("Mapped terminals:", mappedTerminals); 
         setTerminals(mappedTerminals);
         if (mappedTerminals.length === 0) {
           setSnackbar({
@@ -471,7 +475,7 @@ const CurrentDataDisplayTV = ({ saveView, savedViews, deleteView }) => {
     setSaveAnchorEl(event.currentTarget);
     setViewName(
       isUpdating
-        ? savedViews.find((v) => v.id === selectedViewId)?.name || ""
+        ? savedViews.find((v) => v._id === selectedViewId)?.name || ""
         : `View ${savedViews.length + 1}`
     );
     setViewNameError("");
@@ -498,7 +502,7 @@ const CurrentDataDisplayTV = ({ saveView, savedViews, deleteView }) => {
     }
   };
 
-  const handleSaveView = () => {
+  const handleSaveView = async () => {
     if (!viewName.trim()) {
       setViewNameError("View name cannot be empty.");
       return;
@@ -532,7 +536,7 @@ const CurrentDataDisplayTV = ({ saveView, savedViews, deleteView }) => {
             hour12: true,
           }),
         };
-        saveView(updatedView);
+        await updateTerminalView(selectedViewId, updatedView);
         setSnackbar({
           open: true,
           message: "View updated successfully!",
@@ -570,17 +574,21 @@ const CurrentDataDisplayTV = ({ saveView, savedViews, deleteView }) => {
     }
   };
 
-  const handleSelectView = (view) => {
+  const handleSelectView = async (view) => {
     setWidgetType(view.widgetType);
     setPlant(view.plant);
     setTerminal(view.terminal);
     setMeasurands(view.measurands);
     setIsUpdating(false);
+    setLoadedView(view); // Track the loaded view
+
+    // Fetch latest terminals and measurands for the selected plant/terminal
+    await fetchTerminals(view.plant);
+    await fetchMeasurands(view.plant, view.terminal);
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
     const newWidgets = view.measurands.map((measurandId, index) => {
-      const measurandOption = measurandOptions.find(
-        (m) => m.id === measurandId
-      );
+      const measurandOption = measurandOptions.find((m) => m.id === measurandId);
       return {
         id: `${view.terminal}-${measurandId}-${Date.now()}-${index}`,
         type: view.widgetType,
@@ -641,6 +649,29 @@ const CurrentDataDisplayTV = ({ saveView, savedViews, deleteView }) => {
       severity: "success",
     });
   };
+
+  // Detect if the current state differs from the loaded view
+  useEffect(() => {
+    if (!loadedView || !selectedViewId) {
+      setIsUpdating(false);
+      return;
+    }
+    const isSame =
+      loadedView.widgetType === widgetType &&
+      loadedView.plant === plant &&
+      loadedView.terminal === terminal &&
+      isEqual(loadedView.measurands, measurands) &&
+      isEqual(loadedView.layout, layout);
+    setIsUpdating(!isSame);
+  }, [widgetType, plant, terminal, measurands, layout, loadedView, selectedViewId]);
+
+  // Ensure measurand dropdown is always in sync with loaded view
+  useEffect(() => {
+    if (loadedView && selectedViewId) {
+      setMeasurands(loadedView.measurands);
+    }
+    // eslint-disable-next-line
+  }, [measurandOptions, loadedView, selectedViewId]);
 
   const handleCreateNewView = () => {
     setWidgetType("Number");
@@ -949,7 +980,7 @@ const CurrentDataDisplayTV = ({ saveView, savedViews, deleteView }) => {
                   handleCreateNewView();
                 } else {
                   const selectedView = savedViews.find(
-                    (v) => v.id === e.target.value
+                    (v) => v._id === e.target.value
                   );
                   if (selectedView) {
                     handleSelectView(selectedView);
@@ -966,7 +997,7 @@ const CurrentDataDisplayTV = ({ saveView, savedViews, deleteView }) => {
                 <Typography>Create New View</Typography>
               </MenuItem>
               {savedViews.map((view) => (
-                <MenuItem key={view.id} value={view.id}>
+                <MenuItem key={view._id} value={view._id}>
                   <Typography>{view.name}</Typography>
                 </MenuItem>
               ))}

@@ -113,6 +113,7 @@ const MultiAxisGraphWidget = ({ data, onUpdate }) => {
       primaryColor: data.primaryColor || "#2196f3",
       hideXAxis: data.hideXAxis || false,
       xAxisConfig: (data.xAxisConfig || 10).toString(),
+      thresholdPercentage: (data.thresholdPercentage || 0).toString(),
     },
   });
 
@@ -120,6 +121,7 @@ const MultiAxisGraphWidget = ({ data, onUpdate }) => {
   const measurandColors = watch("measurandColors");
   const primaryColor = watch("primaryColor");
   const hideXAxis = watch("hideXAxis");
+  const thresholdPercentage = parseFloat(watch("thresholdPercentage")) || 0;
 
   useEffect(() => {
     reset({
@@ -130,6 +132,7 @@ const MultiAxisGraphWidget = ({ data, onUpdate }) => {
       primaryColor: data.primaryColor || "#2196f3",
       hideXAxis: data.hideXAxis || false,
       xAxisConfig: (data.xAxisConfig || 10).toString(),
+      thresholdPercentage: (data.thresholdPercentage || 0).toString(),
     });
   }, [data, reset]);
 
@@ -169,12 +172,13 @@ const MultiAxisGraphWidget = ({ data, onUpdate }) => {
         const newLabels = [...prev.labels, newLabel].slice(
           -Number(watch("xAxisConfig") || 10)
         );
+        const mainData = [...prev.datasets[0].data, newValue].slice(
+          -Number(watch("xAxisConfig") || 10)
+        );
         const datasets = [
           {
             label: data.measurand || "Value",
-            data: [...prev.datasets[0].data, newValue].slice(
-              -Number(watch("xAxisConfig") || 10)
-            ),
+            data: mainData,
             borderColor: primaryColor || "#2196f3",
             backgroundColor:
               data.graphType === "area"
@@ -211,6 +215,60 @@ const MultiAxisGraphWidget = ({ data, onUpdate }) => {
           });
         });
 
+        if (thresholdPercentage > 0 && mainData.length > 0) {
+          const upper = mainData.map((v) => v + (v * thresholdPercentage) / 100);
+          const lower = mainData.map((v) => v - (v * thresholdPercentage) / 100);
+          // Shaded area between thresholds
+          datasets.push({
+            label: "Threshold Range",
+            data: upper,
+            type: "line",
+            borderWidth: 0,
+            pointRadius: 0,
+            fill: {
+              target: "-1",
+              above: "rgba(211,47,47,0.08)",
+              below: "rgba(56,142,60,0.08)",
+            },
+            backgroundColor: "rgba(33,150,243,0.08)",
+            order: 98,
+            yAxisID: "y0",
+            tension: data.graphType === "area" || data.graphType === "line" ? 0.4 : 0,
+            datalabels: { display: false },
+            borderDash: [],
+          });
+          // Upper threshold line
+          datasets.push({
+            label: "Upper Threshold",
+            data: upper,
+            type: "line",
+            borderColor: "rgba(211,47,47,0.7)",
+            borderDash: [6, 6],
+            pointRadius: 0,
+            fill: false,
+            borderWidth: 2,
+            yAxisID: "y0",
+            order: 99,
+            tension: data.graphType === "area" || data.graphType === "line" ? 0.4 : 0,
+            datalabels: { display: false },
+          });
+          // Lower threshold line
+          datasets.push({
+            label: "Lower Threshold",
+            data: lower,
+            type: "line",
+            borderColor: "rgba(56,142,60,0.7)",
+            borderDash: [6, 6],
+            pointRadius: 0,
+            fill: false,
+            borderWidth: 2,
+            yAxisID: "y0",
+            order: 99,
+            tension: data.graphType === "area" || data.graphType === "line" ? 0.4 : 0,
+            datalabels: { display: false },
+          });
+        }
+
         return {
           labels: newLabels,
           datasets,
@@ -232,14 +290,7 @@ const MultiAxisGraphWidget = ({ data, onUpdate }) => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        display: true,
-        labels: {
-          font: {
-            family: data.valueFontFamily || "Roboto",
-            weight: "normal",
-            style: "normal",
-          },
-        },
+        display: false,
       },
       tooltip: {
         enabled: true,
@@ -411,7 +462,8 @@ const MultiAxisGraphWidget = ({ data, onUpdate }) => {
       primaryColor: formData.primaryColor,
       hideXAxis: formData.hideXAxis,
       xAxisConfig: Number(formData.xAxisConfig),
-      ranges: ranges, // Ensure ranges are included
+      ranges: ranges,
+      thresholdPercentage: parseFloat(formData.thresholdPercentage) || 0,
     };
     onUpdate(updatedData);
     setOpenSettings(false);
@@ -734,6 +786,22 @@ const MultiAxisGraphWidget = ({ data, onUpdate }) => {
                 })}
                 error={!!errors.resetInterval}
                 helperText={errors.resetInterval?.message}
+              />
+              <TextField
+                fullWidth
+                label="Threshold Percentage (%)"
+                type="number"
+                {...register("thresholdPercentage", {
+                  min: 0,
+                  max: 100,
+                })}
+                error={!!errors.thresholdPercentage}
+                helperText={
+                  errors.thresholdPercentage
+                    ? "Enter a value between 0 and 100"
+                    : ""
+                }
+                sx={{ mt: 1 }}
               />
             </Stack>
           </Box>
