@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { Box, Tabs, Tab } from "@mui/material";
 import { Speed, History } from "@mui/icons-material";
-import { motion } from "framer-motion";
 import CurrentDataDisplayMV from "./MeasurandView/CurrentDataDisplayMV";
 import HistoricalDataDisplayMV from "./MeasurandView/HistoricalDataDisplayMV";
 import { useThemeContext } from "../../context/ThemeContext";
@@ -116,7 +115,7 @@ const MeasurandView = () => {
           label="Current Data Display"
           icon={<Speed sx={{ mr: 1, fontSize: "1.4rem", color: "#FF4500" }} />}
           iconPosition="start"
-          component={motion.div}
+          component="div"
         />
         <Tab
           label="Historical Data Display"
@@ -124,7 +123,7 @@ const MeasurandView = () => {
             <History sx={{ mr: 1, fontSize: "1.4rem", color: "#FFD700" }} />
           }
           iconPosition="start"
-          component={motion.div}
+          component="div"
         />
       </Tabs>
       {tabValue === 0 && (

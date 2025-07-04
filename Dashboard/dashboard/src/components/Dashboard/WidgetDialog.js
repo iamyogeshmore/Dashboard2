@@ -32,27 +32,14 @@ import {
   Info,
 } from "@mui/icons-material";
 import { useForm, Controller } from "react-hook-form";
-import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { ChromePicker } from "react-color";
 import { StyledTextField, StyledSelect } from "./Dashboard.styles";
-
-const mockData = {
-  plants: ["Plant A", "Plant B", "Plant C"],
-  terminals: {
-    "Plant A": ["Terminal A1", "Terminal A2"],
-    "Plant B": ["Terminal B1", "Terminal B2"],
-    "Plant C": ["Terminal C1", "Terminal C2"],
-  },
-  measurands: {
-    "Terminal A1": ["Temperature", "Pressure"],
-    "Terminal A2": ["Flow Rate", "Voltage"],
-    "Terminal B1": ["Current", "Power"],
-    "Terminal B2": ["Energy", "Frequency"],
-    "Terminal C1": ["Humidity", "Level"],
-    "Terminal C2": ["Speed", "Torque"],
-  },
-};
+import {
+  getPlants,
+  getTerminals,
+  getMeasurands,
+} from "../../services/apiService";
 
 const generateRandomColor = () => {
   const letters = "0123456789ABCDEF";
@@ -98,7 +85,7 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
       decimalPlaces: initialData?.decimalPlaces || "2",
       graphProfile: initialData?.graphProfile || "simple",
       graphType: initialData?.graphType || "area",
-      resetInterval: (initialData?.resetInterval || 5000).toString(),
+      resetInterval: (initialData?.resetInterval || 900000).toString(),
       rows: initialData?.rows || "",
       columns: initialData?.columns || "",
       showTimestamp: initialData?.showTimestamp || false,
@@ -122,6 +109,7 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
       primaryColor: initialData?.primaryColor || "#2196f3",
       xAxisConfig: (initialData?.xAxisConfig || 10).toString(),
       hideXAxis: initialData?.hideXAxis || false,
+      profile: initialData?.profile || "daily",
     },
   });
 
@@ -136,11 +124,22 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
   const [colorPickerField, setColorPickerField] = useState(null);
   const colorPickerRef = useRef(null);
 
+  const [plants, setPlants] = useState([]);
+  const [terminals, setTerminals] = useState([]);
+  const [measurands, setMeasurands] = useState([]);
+  const [loadingPlants, setLoadingPlants] = useState(false);
+  const [loadingTerminals, setLoadingTerminals] = useState(false);
+  const [loadingMeasurands, setLoadingMeasurands] = useState(false);
+  const [errorPlants, setErrorPlants] = useState(null);
+  const [errorTerminals, setErrorTerminals] = useState(null);
+  const [errorMeasurands, setErrorMeasurands] = useState(null);
+
   const minRange = watch("minRange");
   const maxRange = watch("maxRange");
   const graphProfile = watch("graphProfile");
   const compareMeasurands = watch("compareMeasurands");
   const measurandColors = watch("measurandColors");
+  const profile = watch("profile");
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -183,6 +182,65 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
       console.warn(`Invalid widgetType: ${widgetType}`);
     }
   }, [open, widgetType]);
+
+  useEffect(() => {
+    if (open) {
+      setLoadingPlants(true);
+      getPlants()
+        .then((res) => {
+          setPlants(
+            (res.data || []).map((p) => ({
+              id: p.id || p.plantid || p.PlantId || p.PlantID,
+              name: p.name || p.PlantName || p.plantName,
+            }))
+          );
+          setErrorPlants(null);
+        })
+        .catch((err) => setErrorPlants(err.message))
+        .finally(() => setLoadingPlants(false));
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (selectedPlant) {
+      setLoadingTerminals(true);
+      getTerminals(selectedPlant)
+        .then((res) => {
+          setTerminals(
+            (res.data || []).map((t) => ({
+              id: t.id || t.TerminalId || t.terminalId,
+              id: t.TerminalId,
+              name: t.TerminalName,
+            }))
+          );
+          setErrorTerminals(null);
+        })
+        .catch((err) => setErrorTerminals(err.message))
+        .finally(() => setLoadingTerminals(false));
+    } else {
+      setTerminals([]);
+    }
+  }, [selectedPlant]);
+
+  useEffect(() => {
+    if (selectedPlant && selectedTerminal) {
+      setLoadingMeasurands(true);
+      getMeasurands(selectedPlant, selectedTerminal)
+        .then((res) => {
+          setMeasurands(
+            (res.data || []).map((m) => ({
+              id: m.id || m.MeasurandId || m.measurandId,
+              name: m.name || m.MeasurandName || m.measurandName,
+            }))
+          );
+          setErrorMeasurands(null);
+        })
+        .catch((err) => setErrorMeasurands(err.message))
+        .finally(() => setLoadingMeasurands(false));
+    } else {
+      setMeasurands([]);
+    }
+  }, [selectedPlant, selectedTerminal]);
 
   const handleAddRange = () => {
     const lastRange = ranges[ranges.length - 1];
@@ -314,7 +372,7 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
         name: "plant",
         label: "Plant",
         type: "select",
-        options: mockData.plants,
+        options: plants.map((p) => ({ value: p.id, label: p.name })),
         required: true,
         icon: <Factory />,
       },
@@ -322,7 +380,7 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
         name: "terminal",
         label: "Terminal",
         type: "select",
-        options: selectedPlant ? mockData.terminals[selectedPlant] || [] : [],
+        options: terminals.map((t) => ({ value: t.id, label: t.name })),
         required: true,
         icon: <Terminal />,
       },
@@ -330,9 +388,7 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
         name: "measurand",
         label: "Measurand",
         type: "select",
-        options: selectedTerminal
-          ? mockData.measurands[selectedTerminal] || []
-          : [],
+        options: measurands.map((m) => ({ value: m.id, label: m.name })),
         required: true,
         icon: <Speed />,
       },
@@ -360,7 +416,7 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
         name: "plant",
         label: "Plant",
         type: "select",
-        options: mockData.plants,
+        options: plants.map((p) => ({ value: p.id, label: p.name })),
         required: true,
         icon: <Factory />,
       },
@@ -368,7 +424,7 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
         name: "terminal",
         label: "Terminal",
         type: "select",
-        options: selectedPlant ? mockData.terminals[selectedPlant] || [] : [],
+        options: terminals.map((t) => ({ value: t.id, label: t.name })),
         required: true,
         icon: <Terminal />,
       },
@@ -376,9 +432,7 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
         name: "measurand",
         label: "Measurand",
         type: "select",
-        options: selectedTerminal
-          ? mockData.measurands[selectedTerminal] || []
-          : [],
+        options: measurands.map((m) => ({ value: m.id, label: m.name })),
         required: true,
         icon: <Speed />,
       },
@@ -420,7 +474,7 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
         name: "plant",
         label: "Plant",
         type: "select",
-        options: mockData.plants,
+        options: plants.map((p) => ({ value: p.id, label: p.name })),
         required: true,
         icon: <Factory />,
       },
@@ -428,7 +482,7 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
         name: "terminal",
         label: "Terminal",
         type: "select",
-        options: selectedPlant ? mockData.terminals[selectedPlant] || [] : [],
+        options: terminals.map((t) => ({ value: t.id, label: t.name })),
         required: true,
         icon: <Terminal />,
       },
@@ -436,11 +490,21 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
         name: "measurand",
         label: "Measurand",
         type: "select",
-        options: selectedTerminal
-          ? mockData.measurands[selectedTerminal] || []
-          : [],
+        options: measurands.map((m) => ({ value: m.id, label: m.name })),
         required: true,
         icon: <Speed />,
+      },
+      {
+        name: "profile",
+        label: "Profile",
+        type: "select",
+        options: [
+          { value: "daily", label: "Daily" },
+          { value: "block", label: "Block" },
+          { value: "trend", label: "Trend" },
+        ],
+        required: true,
+        icon: <ShowChart />,
       },
       {
         name: "graphProfile",
@@ -454,19 +518,23 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
         name: "graphType",
         label: "Graph Type",
         type: "select",
-        options:
-          graphProfile === "multi-axis"
-            ? ["line", "area"]
-            : ["bar", "line", "area"],
         required: true,
         icon: <ShowChart />,
       },
       {
         name: "resetInterval",
-        label: "Reset Interval (ms)",
-        type: "number",
+        label: "Reset Interval",
+        type: "select",
         required: true,
         icon: <ShowChart />,
+        options: [
+          { value: 900000, label: "15 min" },
+          { value: 1800000, label: "30 min" },
+          { value: 2700000, label: "45 min" },
+          { value: 3600000, label: "1 hr" },
+          { value: 28800000, label: "8 hr" },
+          { value: 86400000, label: "24 hr" },
+        ],
       },
       {
         name: "xAxisConfig",
@@ -486,9 +554,7 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
         name: "compareMeasurands",
         label: "Compare Measurands (Max 10)",
         type: "select",
-        options: selectedTerminal
-          ? mockData.measurands[selectedTerminal] || []
-          : [],
+        options: measurands.map((m) => ({ value: m.id, label: m.name })),
         multiple: true,
         required: false,
         icon: <ShowChart />,
@@ -513,7 +579,10 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
         name: "dataGridType",
         label: "Data Grid Orientation",
         type: "select",
-        options: ["terminal", "measurand"],
+        options: [
+          { value: "terminal", label: "Terminal" },
+          { value: "measurand", label: "Measurand" },
+        ],
         required: true,
         icon: <GridOn />,
       },
@@ -598,7 +667,7 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
     if (widgetType === "graph") {
       filteredData.graphType =
         data.graphType || (data.graphProfile === "multi-axis" ? "line" : "bar");
-      filteredData.resetInterval = Number(data.resetInterval) || 5000;
+      filteredData.resetInterval = Number(data.resetInterval) || 900000;
       filteredData.xAxisConfig = Number(data.xAxisConfig) || 10;
       filteredData.measurandColors = measurandColors;
     }
@@ -624,6 +693,31 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
     };
     return labels[type] || type;
   };
+
+  // Add state for profile and fix graphType options
+  const getGraphTypeOptions = () => {
+    if (graphProfile === "multi-axis") {
+      return [
+        { value: "line", label: "Line" },
+        { value: "area", label: "Area" },
+      ];
+    }
+    // For simple profile, allow all three
+    return [
+      { value: "bar", label: "Bar" },
+      { value: "line", label: "Line" },
+      { value: "area", label: "Area" },
+    ];
+  };
+
+  // Ensure graphType is always valid for the current options
+  useEffect(() => {
+    const options = getGraphTypeOptions();
+    const current = watch("graphType");
+    if (!options.some((opt) => opt.value === current)) {
+      setValue("graphType", options[0].value);
+    }
+  }, [graphProfile, profile, setValue, watch]);
 
   return (
     <Dialog
@@ -697,16 +791,61 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
           <Box component="form" onSubmit={handleSubmit(onFormSubmit)}>
             <Stack spacing={2}>
               {widgetFields[widgetType].map((field, index) => (
-                <motion.div
+                <div
                   key={field.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.3,
-                    delay: index * 0.1,
-                  }}
                 >
                   {field.type === "select" &&
+                  field.name === "graphType" ? (
+                    <FormControl fullWidth error={!!errors[field.name]}>
+                      <InputLabel>{field.label}</InputLabel>
+                      <Controller
+                        name={field.name}
+                        control={control}
+                        rules={{
+                          required: field.required
+                            ? `${field.label} is required`
+                            : false,
+                        }}
+                        render={({ field: { onChange, value } }) => (
+                          <StyledSelect
+                            value={value || ""}
+                            onChange={onChange}
+                            label={field.label}
+                            startAdornment={
+                              field.icon && (
+                                <Box
+                                  sx={{
+                                    mr: 1,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    color: (theme) =>
+                                      theme.palette.primary.main,
+                                  }}
+                                >
+                                  {field.icon}
+                                </Box>
+                              )
+                            }
+                          >
+                            {getGraphTypeOptions().map((option) => (
+                              <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                              </MenuItem>
+                            ))}
+                          </StyledSelect>
+                        )}
+                      />
+                      {errors[field.name] && (
+                        <Typography
+                          variant="caption"
+                          color="error"
+                          sx={{ mt: 0.5 }}
+                        >
+                          {errors[field.name].message}
+                        </Typography>
+                      )}
+                    </FormControl>
+                  ) : field.type === "select" &&
                   field.name !== "compareMeasurands" ? (
                     <FormControl fullWidth error={!!errors[field.name]}>
                       <InputLabel>{field.label}</InputLabel>
@@ -760,12 +899,55 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
                                 </Box>
                               )
                             }
+                            disabled={
+                              (field.name === "plant" && loadingPlants) ||
+                              (field.name === "terminal" && loadingTerminals) ||
+                              (field.name === "measurand" && loadingMeasurands)
+                            }
                           >
-                            {field.options.map((option) => (
-                              <MenuItem key={option} value={option}>
-                                {option}
+                            {field.name === "plant" && loadingPlants ? (
+                              <MenuItem value="" disabled>
+                                Loading...
                               </MenuItem>
-                            ))}
+                            ) : field.name === "plant" && errorPlants ? (
+                              <MenuItem value="" disabled>
+                                {errorPlants}
+                              </MenuItem>
+                            ) : field.name === "plant" && plants.length === 0 ? (
+                              <MenuItem value="" disabled>
+                                No plants found
+                              </MenuItem>
+                            ) : field.name === "terminal" && loadingTerminals ? (
+                              <MenuItem value="" disabled>
+                                Loading...
+                              </MenuItem>
+                            ) : field.name === "terminal" && errorTerminals ? (
+                              <MenuItem value="" disabled>
+                                {errorTerminals}
+                              </MenuItem>
+                            ) : field.name === "terminal" && terminals.length === 0 ? (
+                              <MenuItem value="" disabled>
+                                No terminals found
+                              </MenuItem>
+                            ) : field.name === "measurand" && loadingMeasurands ? (
+                              <MenuItem value="" disabled>
+                                Loading...
+                              </MenuItem>
+                            ) : field.name === "measurand" && errorMeasurands ? (
+                              <MenuItem value="" disabled>
+                                {errorMeasurands}
+                              </MenuItem>
+                            ) : field.name === "measurand" && measurands.length === 0 ? (
+                              <MenuItem value="" disabled>
+                                No measurands found
+                              </MenuItem>
+                            ) : (
+                              field.options.map((option) => (
+                                <MenuItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </MenuItem>
+                              ))
+                            )}
                           </StyledSelect>
                         )}
                       />
@@ -826,8 +1008,8 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
                             }
                           >
                             {field.options.map((option) => (
-                              <MenuItem key={option} value={option}>
-                                {option}
+                              <MenuItem key={option.value} value={option.value}>
+                                {option.label}
                               </MenuItem>
                             ))}
                           </StyledSelect>
@@ -1147,19 +1329,13 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
                       }}
                     />
                   )}
-                </motion.div>
+                </div>
               ))}
 
               {widgetType === "graph" &&
                 compareMeasurands.map((measurand, index) => (
-                  <motion.div
+                  <div
                     key={`measurandColor-${measurand}`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      duration: 0.3,
-                      delay: (widgetFields[widgetType].length + index) * 0.1,
-                    }}
                   >
                     <Box sx={{ position: "relative" }}>
                       <StyledTextField
@@ -1229,7 +1405,7 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
                         </Box>
                       )}
                     </Box>
-                  </motion.div>
+                  </div>
                 ))}
 
               {(widgetType === "number" || widgetType === "gauge") && (
@@ -1271,14 +1447,8 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
                   </Box>
 
                   {ranges.map((range, index) => (
-                    <motion.div
+                    <div
                       key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{
-                        duration: 0.3,
-                        delay: (widgetFields[widgetType].length + index) * 0.1,
-                      }}
                     >
                       <Box
                         sx={{
@@ -1423,7 +1593,7 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
                           <Delete />
                         </IconButton>
                       </Box>
-                    </motion.div>
+                    </div>
                   ))}
                   {errors.ranges && (
                     <Typography
@@ -1476,28 +1646,26 @@ const WidgetDialog = ({ open, onClose, widgetType, onSubmit, initialData }) => {
         >
           Cancel
         </Button>
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: "0.95" }}>
-          <Button
-            variant="contained"
-            onClick={handleSubmit(onFormSubmit)}
-            sx={{
-              textTransform: "none",
-              borderRadius: "10px",
-              px: 3,
-              minWidth: 120,
+        <Button
+          variant="contained"
+          onClick={handleSubmit(onFormSubmit)}
+          sx={{
+            textTransform: "none",
+            borderRadius: "10px",
+            px: 3,
+            minWidth: 120,
+            background: (theme) =>
+              `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.primary.light})`,
+            "&:hover": {
               background: (theme) =>
-                `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.primary.light})`,
-              "&:hover": {
-                background: (theme) =>
-                  `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                boxShadow: (theme) =>
-                  `0 6px 16px ${theme.palette.primary.light}b3`,
-              },
-            }}
-          >
-            {initialData ? "Update" : "Create"} Widget
-          </Button>
-        </motion.div>
+                `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+              boxShadow: (theme) =>
+                `0 6px 16px ${theme.palette.primary.light}b3`,
+            },
+          }}
+        >
+          {initialData ? "Update" : "Create"} Widget
+        </Button>
       </DialogActions>
     </Dialog>
   );

@@ -1,6 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const http = require("http");
 const connectDB = require("./config/db");
 const logger = require("./utils/logger");
 const errorHandler = require("./middleware/errorHandler");
@@ -8,11 +9,11 @@ const ESPlantRoutes = require("./routes/ESPlantRoutes");
 const esPlantTerminalRoutes = require("./routes/esPlantTerminalRoutes");
 const hdNutsGraphRoutes = require("./routes/hdNutsGraphRoutes");
 const logRoutes = require("./routes/logRoutes");
-const esHistoricalTableRoutes = require('./routes/ESHistoricalTableRoutes');
-const terminalViewRoutes = require('./routes/TerminalViewRoutes');
-const http = require("http");
-const dashboardRoutes = require('./routes/DashboardRoutes');
-const widgetTemplateRoutes = require('./routes/widgetTemplateRoutes');
+const esHistoricalTableRoutes = require("./routes/ESHistoricalTableRoutes");
+const terminalViewRoutes = require("./routes/TerminalViewRoutes");
+const dashboardRoutes = require("./routes/DashboardRoutes");
+const widgetTemplateRoutes = require("./routes/widgetTemplateRoutes");
+const StatusRoutes = require("./routes/StatusRoutes");
 
 // ----------------------- Load environment variables from .env file -----------------------
 dotenv.config();
@@ -56,10 +57,11 @@ app.use("/api/live-value", esPlantTerminalRoutes);
 app.use("/api/history", hdNutsGraphRoutes);
 app.use("/api/hdnuts", hdNutsGraphRoutes);
 app.use("/api/logs", logRoutes);
-app.use('/api/historical-tables', esHistoricalTableRoutes);
-app.use('/api/terminal-views', terminalViewRoutes);
-app.use('/api/dashboards', dashboardRoutes);
-app.use('/api/widget-templates', widgetTemplateRoutes);
+app.use("/api/historical-tables", esHistoricalTableRoutes);
+app.use("/api/terminal-views", terminalViewRoutes);
+app.use("/api/dashboards", dashboardRoutes);
+app.use("/api/widget-templates", widgetTemplateRoutes);
+app.use("/api", StatusRoutes);
 
 // ----------------------- Handle 404 for undefined routes -----------------------
 app.use((req, res) => {

@@ -8,7 +8,6 @@ import {
 } from "@mui/material";
 import { Delete } from "@mui/icons-material";
 import { useThemeContext } from "../../../../context/ThemeContext";
-import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
 const TableCard = ({ table, onDelete }) => {
@@ -37,7 +36,7 @@ const TableCard = ({ table, onDelete }) => {
   };
 
   return (
-    <motion.div>
+    <div>
       <Card
         onClick={handleClick}
         sx={{
@@ -199,7 +198,7 @@ const TableCard = ({ table, onDelete }) => {
           </Typography>
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 };
 

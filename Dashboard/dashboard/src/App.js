@@ -21,6 +21,7 @@ import { useThemeContext } from "./context/ThemeContext";
 import { useRef, useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import "./index.css";
+import StatusMonitoring from "./components/StatusMonitoring/StatusMonitoring";
 
 function AppContent({
   onLoadDashboard,
@@ -161,6 +162,7 @@ function AppContent({
             <Route path="/reports/generate" element={<GenerateReports />} />
             <Route path="/about" element={<div>About Page</div>} />
             <Route path="/contact" element={<div>Contact Page</div>} />
+            <Route path="/status" element={<StatusMonitoring />} />
           </Routes>
         </div>
         {!isFullScreen && <Footer />}

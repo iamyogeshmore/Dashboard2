@@ -34,10 +34,10 @@ import {
   Tooltip as ChartTooltip,
   Legend,
 } from "chart.js";
-import { motion } from "framer-motion";
 import { CardTitle } from "../Dashboard.styles";
 import { useForm, Controller } from "react-hook-form";
 import { ChromePicker } from "react-color";
+import { getMeasurands } from '../../../services/apiService';
 
 ChartJS.register(
   LineElement,
@@ -50,22 +50,20 @@ ChartJS.register(
   Legend
 );
 
-const mockData = {
-  plants: ["Plant A", "Plant B", "Plant C"],
-  terminals: {
-    "Plant A": ["Terminal A1", "Terminal A2"],
-    "Plant B": ["Terminal B1", "Terminal B2"],
-    "Plant C": ["Terminal C1", "Terminal C2"],
-  },
-  measurands: {
-    "Terminal A1": ["Temperature", "Pressure"],
-    "Terminal A2": ["Flow Rate", "Voltage"],
-    "Terminal B1": ["Current", "Power"],
-    "Terminal B2": ["Energy", "Frequency"],
-    "Terminal C1": ["Humidity", "Level"],
-    "Terminal C2": ["Speed", "Torque"],
-  },
-};
+const RESET_INTERVAL_OPTIONS = [
+  { value: 900000, label: '15 min' },
+  { value: 1800000, label: '30 min' },
+  { value: 2700000, label: '45 min' },
+  { value: 3600000, label: '1 hr' },
+  { value: 28800000, label: '8 hr' },
+  { value: 86400000, label: '24 hr' },
+];
+
+const PROFILE_OPTIONS = [
+  { value: 'daily', label: 'Daily' },
+  { value: 'block', label: 'Block' },
+  { value: 'trend', label: 'Trend' },
+];
 
 const GraphWidget = ({ data, onUpdate }) => {
   // Add default ranges if not provided
@@ -95,6 +93,8 @@ const GraphWidget = ({ data, onUpdate }) => {
   const [openSettings, setOpenSettings] = useState(false);
   const [colorPickerField, setColorPickerField] = useState(null);
   const colorPickerRef = useRef(null);
+  const [measurandOptions, setMeasurandOptions] = useState([]);
+  const [profile, setProfile] = useState(data.profile || 'daily');
 
   const {
     register,
@@ -196,19 +196,21 @@ const GraphWidget = ({ data, onUpdate }) => {
           },
         ];
 
-        compareMeasurands.forEach((measurand, index) => {
+        compareMeasurands.forEach((measurandId) => {
+          const measurandObj = measurandOptions.find(opt => opt.id === measurandId);
+          if (!measurandObj) return null;
           const newCompareValue = generateRandomData(min, max);
           datasets.push({
-            label: measurand,
+            label: measurandObj.name,
             data: [
-              ...(prev.datasets[index + 1]?.data || []),
+              ...(prev.datasets[measurandOptions.indexOf(measurandObj) + 1]?.data || []),
               newCompareValue,
             ].slice(-Number(watch("xAxisConfig") || 10)),
-            borderColor: measurandColors[measurand] || generateRandomColor(),
+            borderColor: measurandColors[measurandId] || generateRandomColor(),
             backgroundColor:
               data?.graphType === "area"
-                ? `${measurandColors[measurand] || generateRandomColor()}80`
-                : measurandColors[measurand] || generateRandomColor(),
+                ? `${measurandColors[measurandId] || generateRandomColor()}80`
+                : measurandColors[measurandId] || generateRandomColor(),
             fill: data?.graphType === "area",
             tension:
               data?.graphType === "area" || data?.graphType === "line"
@@ -290,6 +292,29 @@ const GraphWidget = ({ data, onUpdate }) => {
 
     return () => clearInterval(interval);
   }, [data, compareMeasurands, measurandColors, primaryColor, watch]);
+
+  // Fetch measurands when plant, terminal, or profile changes
+  useEffect(() => {
+    async function fetchMeasurands() {
+      const plantId = data.plant && typeof data.plant === 'object' ? data.plant.id : data.plant;
+      const terminalId = data.terminal && typeof data.terminal === 'object' ? data.terminal.id : data.terminal;
+      if (plantId && terminalId && profile) {
+        try {
+          const res = await getMeasurands(plantId, terminalId);
+          if (res.status === 'success' && Array.isArray(res.data)) {
+            setMeasurandOptions(res.data.map(m => ({ id: m.id || m.MeasurandId || m.measurandId, name: m.name || m.MeasurandName || m.measurandName })));
+          } else {
+            setMeasurandOptions([]);
+          }
+        } catch {
+          setMeasurandOptions([]);
+        }
+      } else {
+        setMeasurandOptions([]);
+      }
+    }
+    fetchMeasurands();
+  }, [data.terminal, data.plant, profile]);
 
   const chartOptions = {
     maintainAspectRatio: false,
@@ -417,6 +442,7 @@ const GraphWidget = ({ data, onUpdate }) => {
       hideXAxis: formData.hideXAxis,
       xAxisConfig: Number(formData.xAxisConfig),
       thresholdPercentage: parseFloat(formData.thresholdPercentage) || 0,
+      profile,
     };
     onUpdate(updatedData);
     setOpenSettings(false);
@@ -457,7 +483,7 @@ const GraphWidget = ({ data, onUpdate }) => {
       >
         <Tooltip title={tooltipContent} placement="top">
           <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+            <div>
               <IconButton
                 size="small"
                 onClick={handleOpenSettings}
@@ -471,7 +497,7 @@ const GraphWidget = ({ data, onUpdate }) => {
               >
                 <Settings fontSize="small" />
               </IconButton>
-            </motion.div>
+            </div>
             <CardTitle
               sx={{
                 fontFamily: data.titleFontFamily || "Roboto",
@@ -571,6 +597,18 @@ const GraphWidget = ({ data, onUpdate }) => {
                   </Typography>
                 )}
               </FormControl>
+              <FormControl fullWidth>
+                <InputLabel>Profile</InputLabel>
+                <Select
+                  value={profile}
+                  label="Profile"
+                  onChange={e => setProfile(e.target.value)}
+                >
+                  {PROFILE_OPTIONS.map(opt => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               <FormControl fullWidth error={!!errors.compareMeasurands}>
                 <InputLabel>Compare Measurands (Max 10)</InputLabel>
                 <Controller
@@ -581,85 +619,85 @@ const GraphWidget = ({ data, onUpdate }) => {
                       {...field}
                       label="Compare Measurands (Max 10)"
                       multiple
-                      onChange={(e) => {
+                      onChange={e => {
                         if (e.target.value.length <= 10) {
                           field.onChange(e);
                           const newColors = { ...measurandColors };
-                          e.target.value.forEach((measurand) => {
-                            if (!newColors[measurand]) {
-                              newColors[measurand] = generateRandomColor();
+                          e.target.value.forEach(measurandId => {
+                            if (!newColors[measurandId]) {
+                              newColors[measurandId] = generateRandomColor();
                             }
                           });
-                          setValue("measurandColors", newColors);
+                          setValue('measurandColors', newColors);
                         }
                       }}
                     >
-                      {mockData.measurands[data.terminal]?.map((measurand) => (
-                        <MenuItem key={measurand} value={measurand}>
-                          {measurand}
-                        </MenuItem>
+                      {measurandOptions.map(opt => (
+                        <MenuItem key={opt.id} value={opt.id}>{opt.name}</MenuItem>
                       ))}
                     </Select>
                   )}
                 />
                 {errors.compareMeasurands && (
-                  <Typography variant="caption" color="error">
-                    {errors.compareMeasurands.message}
-                  </Typography>
+                  <Typography variant="caption" color="error">{errors.compareMeasurands.message}</Typography>
                 )}
               </FormControl>
-              {compareMeasurands.map((measurand, index) => (
-                <Box key={measurand} sx={{ position: "relative" }}>
-                  <TextField
-                    fullWidth
-                    label={`${measurand} Color`}
-                    {...register(`measurandColors.${measurand}`, {
-                      required: `${measurand} Color is required`,
-                    })}
-                    InputProps={{
-                      readOnly: true,
-                      endAdornment: (
-                        <Box
-                          sx={{
-                            bgcolor: measurandColors[measurand],
-                            width: 24,
-                            height: 24,
-                            borderRadius: 1,
-                            mr: 1,
-                          }}
-                        />
-                      ),
-                    }}
-                    error={!!errors.measurandColors?.[measurand]}
-                    helperText={errors.measurandColors?.[measurand]?.message}
-                    onClick={() => toggleColorPicker(measurand)}
-                  />
-                  {colorPickerField === measurand && (
-                    <Box
-                      ref={colorPickerRef}
-                      sx={{
-                        position: "absolute",
-                        zIndex: 1300,
-                        top: "100%",
-                        right: 0,
-                        mt: 1,
-                        boxShadow: 3,
-                        borderRadius: 1,
+              {compareMeasurands.map((measurandId, index) => {
+                const measurandObj = measurandOptions.find(opt => opt.id === measurandId);
+                if (!measurandObj) return null;
+                return (
+                  <Box key={measurandId} sx={{ position: "relative" }}>
+                    <TextField
+                      fullWidth
+                      label={`${measurandObj.name} Color`}
+                      {...register(`measurandColors.${measurandId}`, {
+                        required: `${measurandObj.name} Color is required`,
+                      })}
+                      InputProps={{
+                        readOnly: true,
+                        endAdornment: (
+                          <Box
+                            sx={{
+                              bgcolor: measurandColors[measurandId],
+                              width: 24,
+                              height: 24,
+                              borderRadius: 1,
+                              mr: 1,
+                            }}
+                          />
+                        ),
                       }}
-                    >
-                      <ChromePicker
-                        color={measurandColors[measurand]}
-                        onChange={(color) =>
-                          handleColorChange(
-                            `measurandColors.${measurand}`,
-                            color
-                          )
-                        }
-                      />
-                    </Box>
-                  )}
-                </Box>
-              ))}
+                      error={!!errors.measurandColors?.[measurandId]}
+                      helperText={errors.measurandColors?.[measurandId]?.message}
+                      onClick={() => toggleColorPicker(measurandId)}
+                    />
+                    {colorPickerField === measurandId && (
+                      <Box
+                        ref={colorPickerRef}
+                        sx={{
+                          position: "absolute",
+                          zIndex: 1300,
+                          top: "100%",
+                          right: 0,
+                          mt: 1,
+                          boxShadow: 3,
+                          borderRadius: 1,
+                        }}
+                      >
+                        <ChromePicker
+                          color={measurandColors[measurandId]}
+                          onChange={(color) =>
+                            handleColorChange(
+                              `measurandColors.${measurandId}`,
+                              color
+                            )
+                          }
+                        />
+                      </Box>
+                    )}
+                  </Box>
+                );
+              })}
               <Box>
                 <Controller
                   name="hideXAxis"
@@ -731,18 +769,24 @@ const GraphWidget = ({ data, onUpdate }) => {
                   </Box>
                 )}
               </Box>
-              <TextField
-                fullWidth
-                label="Reset Interval (ms)"
-                type="number"
-                {...register("resetInterval", {
-                  required: "Reset Interval is required",
-                  validate: (value) =>
-                    value >= 1000 || "Interval must be at least 1000ms",
-                })}
-                error={!!errors.resetInterval}
-                helperText={errors.resetInterval?.message}
-              />
+              <FormControl fullWidth error={!!errors.resetInterval}>
+                <InputLabel>Reset Interval</InputLabel>
+                <Controller
+                  name="resetInterval"
+                  control={control}
+                  rules={{ required: 'Reset Interval is required' }}
+                  render={({ field }) => (
+                    <Select {...field} label="Reset Interval">
+                      {RESET_INTERVAL_OPTIONS.map(opt => (
+                        <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                />
+                {errors.resetInterval && (
+                  <Typography variant="caption" color="error">{errors.resetInterval.message}</Typography>
+                )}
+              </FormControl>
               <TextField
                 fullWidth
                 label="Threshold Percentage (%)"
@@ -772,7 +816,7 @@ const GraphWidget = ({ data, onUpdate }) => {
           >
             Cancel
           </Button>
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <div>
             <Button
               variant="contained"
               onClick={handleSubmit(onSettingsSubmit)}
@@ -790,7 +834,7 @@ const GraphWidget = ({ data, onUpdate }) => {
             >
               Save
             </Button>
-          </motion.div>
+          </div>
         </DialogActions>
       </Dialog>
     </Card>

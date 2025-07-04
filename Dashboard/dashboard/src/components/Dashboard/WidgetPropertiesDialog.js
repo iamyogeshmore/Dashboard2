@@ -29,7 +29,6 @@ import {
   Delete,
 } from "@mui/icons-material";
 import { useForm, Controller } from "react-hook-form";
-import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { ChromePicker } from "react-color";
 import {
@@ -484,10 +483,7 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
           >
             {["general", "title", "value"].map((section, sectionIndex) => (
               <Box key={section}>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: sectionIndex * 0.1 }}
+                <div
                 >
                   <Typography
                     variant="h6"
@@ -507,16 +503,8 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
                   </Typography>
                   <Stack spacing={2}>
                     {fields[section].map((field, index) => (
-                      <motion.div
+                      <div
                         key={field.name}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{
-                          duration: 0.3,
-                          delay:
-                            (sectionIndex * fields[section].length + index) *
-                            0.1,
-                        }}
                       >
                         {field.type === "select" ? (
                           <FormControl fullWidth error={!!errors[field.name]}>
@@ -729,10 +717,10 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
                             }}
                           />
                         )}
-                      </motion.div>
+                      </div>
                     ))}
                   </Stack>
-                </motion.div>
+                </div>
               </Box>
             ))}
           </Box>
@@ -744,10 +732,7 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
               gap: 3,
             }}
           >
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.3 }}
+            <div
             >
               <Typography
                 variant="h6"
@@ -792,12 +777,9 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
                   Sample Value
                 </Typography>
               </Box>
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.4 }}
+            <div
             >
               <Typography
                 variant="h6"
@@ -877,9 +859,7 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
                   />
                 </FormControl>
                 <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                  <div
                   >
                     <Button
                       variant="contained"
@@ -901,10 +881,8 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
                     >
                       Save
                     </Button>
-                  </motion.div>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                  </div>
+                  <div
                   >
                     <Button
                       variant="contained"
@@ -931,10 +909,8 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
                     >
                       Update
                     </Button>
-                  </motion.div>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                  </div>
+                  <div
                   >
                     <Button
                       variant="contained"
@@ -961,10 +937,10 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
                     >
                       Delete
                     </Button>
-                  </motion.div>
+                  </div>
                 </Box>
               </Stack>
-            </motion.div>
+            </div>
           </Box>
         </Box>
 
@@ -1006,10 +982,7 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
             },
           }}
         >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.2 }}
+          <div
           >
             <TextField
               fullWidth
@@ -1073,7 +1046,7 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
                 Save
               </Button>
             </Box>
-          </motion.div>
+          </div>
         </Popover>
       </DialogContent>
       <DialogActions
@@ -1085,7 +1058,8 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
           borderRadius: "0 0 12px 12px",
         }}
       >
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+        <div
+        >
           <Button
             onClick={onClose}
             sx={{
@@ -1100,8 +1074,9 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
           >
             Cancel
           </Button>
-        </motion.div>
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+        </div>
+        <div
+        >
           <Button
             onClick={handleSubmit(onFormSubmit)}
             variant="contained"
@@ -1122,7 +1097,7 @@ const WidgetPropertiesDialog = ({ open, onClose, widget, onSubmit }) => {
           >
             Apply
           </Button>
-        </motion.div>
+        </div>
       </DialogActions>
     </Dialog>
   );

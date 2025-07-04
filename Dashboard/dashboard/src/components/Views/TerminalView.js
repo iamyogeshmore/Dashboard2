@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Box, Tabs, Tab } from "@mui/material";
 import { Speed } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
-import { motion } from "framer-motion";
 import CurrentDataDisplay from "./TerminalView/CurrentDataDisplayTV";
 import HistoricalDataDisplay from "./TerminalView/HistoricalDataDisplayTV";
 import { useThemeContext } from "../../context/ThemeContext";
@@ -137,7 +136,7 @@ const TerminalView = () => {
           label="Current Data Display"
           icon={<Speed sx={{ mr: 1, fontSize: "1.4rem", color: "#FF4500" }} />}
           iconPosition="start"
-          component={motion.div}
+          component="div"
         />
         <Tab
           label="Historical Data Display"
@@ -145,7 +144,7 @@ const TerminalView = () => {
             <HistoryIcon sx={{ mr: 1, fontSize: "1.4rem", color: "#FFD700" }} />
           }
           iconPosition="start"
-          component={motion.div}
+          component="div"
         />
       </Tabs>
       {tabValue === 0 && (

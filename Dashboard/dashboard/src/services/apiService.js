@@ -355,6 +355,11 @@ export const listDashboards = async () => {
   return await apiCall('/dashboards/list');
 };
 
+// Get ESComStat (Status Monitoring)
+export const getESComStat = async () => {
+  return await apiCall("/get-escomstat");
+};
+
 export default {
   getPlants,
   getTerminals,
@@ -384,4 +389,5 @@ export default {
   updateWidgetTemplate,
   deleteWidgetTemplate,
   listDashboards,
+  getESComStat,
 };

@@ -36,7 +36,6 @@ import {
   Edit,
   Brush,
 } from "@mui/icons-material";
-import { motion } from "framer-motion";
 import WidgetDialog from "./WidgetDialog";
 import WidgetPropertiesDialog from "./WidgetPropertiesDialog";
 import TextWidget from "./dashboardWidgets/TextWidget.js";
@@ -573,11 +572,7 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
           ) : (
             <>
               {editMode && (
-                <motion.div
-                  initial={{ y: -50, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
-                >
+                <div>
                   <StyledAppBar position="static">
                     <Toolbar
                       variant="dense"
@@ -601,15 +596,16 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
                       >
                         {widgetIcons.map(({ type, icon, tooltip }) => (
                           <Tooltip key={type} title={tooltip}>
-                            <motion.div whileTap={{ scale: 0.95 }}>
+                            <div
+                              onClick={() => handleOpenDialog(type)}
+                              aria-label={tooltip}
+                            >
                               <WidgetIconButton
                                 size="small"
-                                onClick={() => handleOpenDialog(type)}
-                                aria-label={tooltip}
                               >
                                 {icon}
                               </WidgetIconButton>
-                            </motion.div>
+                            </div>
                           </Tooltip>
                         ))}
                       </Box>
@@ -644,10 +640,7 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
                         />
                       </Box>
                       <Box sx={{ display: "flex", gap: 1 }}>
-                        <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
+                        <div>
                           <ActionButton
                             variant="contained"
                             size="small"
@@ -661,11 +654,8 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
                           >
                             {isDashboardSaved ? "Update" : "Save"}
                           </ActionButton>
-                        </motion.div>
-                        <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
+                        </div>
+                        <div>
                           <ActionButton
                             variant="contained"
                             size="small"
@@ -675,11 +665,11 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
                           >
                             Publish
                           </ActionButton>
-                        </motion.div>
+                        </div>
                       </Box>
                     </Toolbar>
                   </StyledAppBar>
-                </motion.div>
+                </div>
               )}
               <Box
                 sx={{
@@ -694,10 +684,7 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
                 }}
               >
                 <Tooltip title="Dashboard Settings">
-                  <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
+                  <div>
                     <IconButton
                       size="small"
                       onClick={(e) => setAnchorEl(e.currentTarget)}
@@ -712,7 +699,7 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
                     >
                       <Settings fontSize="0.5rem" />
                     </IconButton>
-                  </motion.div>
+                  </div>
                 </Tooltip>
                 <Menu
                   anchorEl={anchorEl}
@@ -968,7 +955,7 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
           >
             Cancel
           </Button>
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <div>
             <ActionButton
               variant="contained"
               onClick={handleSaveDashboard}
@@ -980,7 +967,7 @@ const Dashboard = ({ onLoadDashboard, onCreateNewDashboard, currentPath }) => {
             >
               {isDashboardSaved ? "Update" : "Save"}
             </ActionButton>
-          </motion.div>
+          </div>
         </DialogActions>
       </StyledWidgetDialog>
       <SnackbarComponent />

@@ -1047,9 +1047,9 @@ const LogView = () => {
                     >
                       Measurand Statistics
                     </Typography>
-                    <Grid container spacing={2}>
+                    <Grid container spacing={2} columns={12}>
                       {measurandNames.map((measurand, index) => (
-                        <Grid item xs={12} sm={6} md={4} key={measurand}>
+                        <Grid xs={12} sm={6} md={4} key={measurand}>
                           <Box
                             sx={{
                               background:

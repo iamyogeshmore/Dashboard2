@@ -2,7 +2,6 @@
 import { useThemeContext } from "../context/ThemeContext";
 import { Box, Switch, styled } from "@mui/material";
 import { WbSunny, NightsStay } from "@mui/icons-material";
-import { motion } from "framer-motion";
 
 const StyledSwitch = styled(Switch)(({ theme, checked }) => ({
   width: 60,
@@ -69,7 +68,7 @@ const ThemeToggle = () => {
         transition: "all 0.3s ease",
       }}
     >
-      <motion.div
+      <div
         initial={{ scale: 0.9 }}
         animate={{ scale: 1 }}
         transition={{ duration: 0.4 }}
@@ -82,7 +81,7 @@ const ThemeToggle = () => {
             <NightsStay sx={{ color: "#DCFCE7", fontSize: 18, m: "3px" }} />
           }
         />
-      </motion.div>
+      </div>
     </Box>
   );
 };

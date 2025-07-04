@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Menu, MenuItem, Tooltip, Box } from "@mui/material";
+import { Menu, MenuItem, Tooltip, Box } from "@mui/material";
 import { ArrowDropDown } from "@mui/icons-material";
 import { Link, useLocation } from "react-router-dom";
 import { NavButton } from "./Navbar.styles";
@@ -15,6 +15,21 @@ const DropdownMenu = ({
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const location = useLocation();
+
+  // If items is empty or not provided, render as a simple button (no dropdown)
+  if (!items || items.length === 0) {
+    return (
+      <Tooltip title={label}>
+        <NavButton
+          startIcon={icon}
+          onClick={onClick}
+          className={isActive ? "active" : ""}
+        >
+          {label}
+        </NavButton>
+      </Tooltip>
+    );
+  }
 
   const handleOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -36,7 +51,9 @@ const DropdownMenu = ({
   // Check if a menu item is currently active
   const isMenuItemActive = (itemPath) => {
     if (!itemPath) return false;
-    return location.pathname === itemPath || location.pathname.startsWith(itemPath);
+    return (
+      location.pathname === itemPath || location.pathname.startsWith(itemPath)
+    );
   };
 
   return (
@@ -62,10 +79,11 @@ const DropdownMenu = ({
                 ? "linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95))"
                 : "linear-gradient(135deg, rgba(31, 41, 55, 0.95), rgba(6, 78, 59, 0.95))",
             backdropFilter: "blur(20px)",
-            color: (theme) => theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
-            border: (theme) => 
-              theme.palette.mode === "light" 
-                ? "1px solid rgba(0, 0, 0, 0.2)" 
+            color: (theme) =>
+              theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
+            border: (theme) =>
+              theme.palette.mode === "light"
+                ? "1px solid rgba(0, 0, 0, 0.2)"
                 : "1px solid rgba(255, 255, 255, 0.2)",
             borderRadius: "16px",
             boxShadow: (theme) =>
@@ -79,14 +97,16 @@ const DropdownMenu = ({
               margin: "4px 8px",
               padding: "12px 16px",
               transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-              color: (theme) => theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
+              color: (theme) =>
+                theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
               fontWeight: 500,
               "&:hover": {
                 background: (theme) =>
                   theme.palette.mode === "light"
                     ? "rgba(0, 0, 0, 0.12)"
                     : "rgba(255, 255, 255, 0.2)",
-                color: (theme) => theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
+                color: (theme) =>
+                  theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF",
                 transform: "translateX(8px)",
                 boxShadow: (theme) =>
                   theme.palette.mode === "light"
@@ -123,24 +143,34 @@ const DropdownMenu = ({
                 justifyContent: "space-between",
                 alignItems: "center",
                 gap: 2,
-                background: (theme) => isActive ? 
-                  (theme.palette.mode === "light" 
-                    ? "rgba(0, 0, 0, 0.15)" 
-                    : "rgba(255, 255, 255, 0.25)") : "transparent",
-                border: (theme) => isActive ? 
-                  (theme.palette.mode === "light" 
-                    ? "2px solid rgba(0, 0, 0, 0.3)" 
-                    : "2px solid rgba(255, 255, 255, 0.4)") : "none",
+                background: (theme) =>
+                  isActive
+                    ? theme.palette.mode === "light"
+                      ? "rgba(0, 0, 0, 0.15)"
+                      : "rgba(255, 255, 255, 0.25)"
+                    : "transparent",
+                border: (theme) =>
+                  isActive
+                    ? theme.palette.mode === "light"
+                      ? "2px solid rgba(0, 0, 0, 0.3)"
+                      : "2px solid rgba(255, 255, 255, 0.4)"
+                    : "none",
                 fontWeight: isActive ? 600 : 500,
-                color: (theme) => isActive ? 
-                  (theme.palette.mode === "light" ? "#000000" : "#FFFFFF") : 
-                  (theme.palette.mode === "light" ? "#1E293B" : "#FFFFFF"),
+                color: (theme) =>
+                  isActive
+                    ? theme.palette.mode === "light"
+                      ? "#000000"
+                      : "#FFFFFF"
+                    : theme.palette.mode === "light"
+                    ? "#1E293B"
+                    : "#FFFFFF",
                 "&:hover": {
                   background: (theme) =>
                     theme.palette.mode === "light"
                       ? "rgba(0, 0, 0, 0.18)"
                       : "rgba(255, 255, 255, 0.25)",
-                  color: (theme) => theme.palette.mode === "light" ? "#000000" : "#FFFFFF",
+                  color: (theme) =>
+                    theme.palette.mode === "light" ? "#000000" : "#FFFFFF",
                   transform: "translateX(8px)",
                   boxShadow: (theme) =>
                     theme.palette.mode === "light"

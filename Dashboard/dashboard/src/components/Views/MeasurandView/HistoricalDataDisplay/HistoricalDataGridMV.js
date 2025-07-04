@@ -1037,10 +1037,10 @@ const HistoricalDataGridMV = ({ table: propTable, onBack, onUpdateTable }) => {
                 columns={columns}
                 initialState={{
                   pagination: {
-                    paginationModel: { pageSize: 10, page: 0 },
+                    paginationModel: { pageSize: 9, page: 0 },
                   },
                 }}
-                pageSizeOptions={[10, 25, 50, 100]}
+                pageSizeOptions={[9, 10, 25, 50, 100]}
                 disableSelectionOnClick
                 sx={{
                   "& .MuiDataGrid-columnHeaders": {
